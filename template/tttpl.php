@@ -3,7 +3,7 @@
 $l = 'en_US';
 
 if(isset($_SERVER['HTTP_HOST'])){
-    if($_SERVER['HTTP_HOST'] == 'br.hackerexperience.com' || $_SERVER['HTTP_HOST'] == 'www.br.hackerexperience.com'){
+    if($_SERVER['HTTP_HOST'] == 'br.'.$gameDomain || $_SERVER['HTTP_HOST'] == 'www.br.'.$gameDomain){
         $l = 'pt_BR';
     }
 }
@@ -94,8 +94,10 @@ if(isset($_POST['ttuser']) || isset($_POST['predefined'])){
     
         $pdo = PDO_DB::factory();
         
-        $sql = 'SELECT COUNT(*) AS total FROM users WHERE login = \''.$name.'\' LIMIT 1';
-        $total = $pdo->query($sql)->fetch(PDO::FETCH_OBJ)->total;
+        $sql = 'SELECT COUNT(*) AS total FROM users WHERE login = :name LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':name' => $name));
+        $total = $stmt->fetch(PDO::FETCH_OBJ)->total;
         
         if($total == 1){
             $error = TRUE;
@@ -106,27 +108,29 @@ if(isset($_POST['ttuser']) || isset($_POST['predefined'])){
         
         if(!$error){
 
-            require '/var/www/classes/Python.class.php';
-            $python = new Python();
+            require_once BASE_PATH . 'classes/UserCreator.class.php';
+            $creator = new UserCreator();
 
             $gameIP1 = rand(0, 255);
             $gameIP2 = rand(0, 255);
             $gameIP3 = rand(0, 255);
             $gameIP4 = rand(0, 255);
 
-            $gameIP = $gameIP1 . '.' . $gameIP2 . '.' . $gameIP3 . '.' . $gameIP4;    
+            $gameIP = $gameIP1 . '.' . $gameIP2 . '.' . $gameIP3 . '.' . $gameIP4;
 
-            $python->createUser($name, 0, 0, $gameIP, $userID, 'twitter');
+            $creator->create($name, 0, 0, $gameIP, array('type' => 'tt', 'socialID' => $userID));
             
-            require '/var/www/classes/Forum.class.php';
+            require BASE_PATH . 'classes/Forum.class.php';
             $forum = new Forum();
             
-            $sql = 'SELECT COUNT(*) AS total, id FROM users WHERE login = \''.$name.'\' LIMIT 1';
-            $regInfo = $pdo->query($sql)->fetch(PDO::FETCH_OBJ);
+            $sql = 'SELECT COUNT(*) AS total, id FROM users WHERE login = :name LIMIT 1';
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array(':name' => $name));
+            $regInfo = $stmt->fetch(PDO::FETCH_OBJ);
 
             if($regInfo->total == 1){
 
-                require '/var/www/classes/Finances.class.php';
+                require BASE_PATH . 'classes/Finances.class.php';
                 $finances = new Finances();
 
                 $finances->createAccount($regInfo->id);
@@ -166,7 +170,7 @@ if(isset($_POST['ttuser']) || isset($_POST['predefined'])){
         <meta name="author" content="">
         <title>Hacker Experience</title>
         <link href="css/bootstrap.css" rel="stylesheet">
-        <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">
+        <link href="css/font-awesome.min.css" rel="stylesheet">
         <link href="css/he_index.css" rel="stylesheet">
         <style>
 

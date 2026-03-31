@@ -1,19 +1,19 @@
 <?php
 
-$fbServerURL = 'http://hackerexperience.com/';
+$fbServerURL = $gameDomainProto.'/';
 
 if(isset($_SERVER['HTTP_HOST'])){
-    if($_SERVER['HTTP_HOST'] == 'br.hackerexperience.com'){
-        $fbServerURL = 'http://br.hackerexperience.com/';
-    } elseif($_SERVER['HTTP_HOST'] == 'en.hackerexperience.com'){
-        $fbServerURL = 'http://en.hackerexperience.com/';
+    if($_SERVER['HTTP_HOST'] == 'br.'.$gameDomain){
+        $fbServerURL = $gameDomainProto.'/';
+    } elseif($_SERVER['HTTP_HOST'] == 'en.'.$gameDomain){
+        $fbServerURL = $gameDomainProto.'/';
     }
 }
 
 $l = 'en_US';
 
 if(isset($_SERVER['HTTP_HOST'])){
-    if($_SERVER['HTTP_HOST'] == 'br.hackerexperience.com' || $_SERVER['HTTP_HOST'] == 'www.br.hackerexperience.com'){
+    if($_SERVER['HTTP_HOST'] == 'br.'.$gameDomain || $_SERVER['HTTP_HOST'] == 'www.br.'.$gameDomain){
         $l = 'pt_BR';
     }
 }
@@ -28,18 +28,14 @@ bind_textdomain_codeset($domain, 'UTF-8');
 textdomain($domain);
 
 require_once 'twitter/twitteroauth.php';
-require_once '/var/www/classes/Facebook.class.php';
+require_once BASE_PATH . 'classes/Facebook.class.php';
 
 switch($fbServerURL){
-    case 'http://hackerexperience.com/':
+    case $gameDomainProto.'/':
         $appID = 0;
         $appSecret = 'REDACTED';
         break;
-    case 'http://br.hackerexperience.com/':
-        $appID = 0;
-        $appSecret = 'REDACTED';
-        break;
-    case 'http://en.hackerexperience.com/':
+    default:
         $appID = 0;
         $appSecret = 'REDACTED';
         break;
@@ -61,11 +57,11 @@ $twitteroauth = new TwitterOAuth('REDACTED', 'REDACTED');
 $twitteroauth->host = "https://api.twitter.com/1.1/";
 
 //if($_SERVER['HTTP_HOST'] == 'www.hackerexperience.com' || $_SERVER['HTTP_HOST'] == 'hackerexperience.com'){
-//    $url = 'http://hackerexperience.com/';
+//    $url = $gameDomainProto.'/';
 //} else {
 //    $url = 'http://127.0.0.1/';
 //}
-$url = 'http://hackerexperience.com/';
+$url = $gameDomainProto.'/';
 
 $request_token = $twitteroauth->getRequestToken($url);
 
@@ -73,8 +69,8 @@ $twitterURL = '';
 
 if($request_token){
 
-    $_SESSION['oauth_token'] = $request_token['oauth_token'];
-    $_SESSION['oauth_token_secret'] = $request_token['oauth_token_secret'];
+    $_SESSION['oauth_token'] = $request_token['oauth_token'] ?? '';
+    $_SESSION['oauth_token_secret'] = $request_token['oauth_token_secret'] ?? '';
 
     if($twitteroauth->http_code==200){
         $twitterURL = $twitteroauth->getAuthorizeURL($request_token['oauth_token']);
@@ -83,7 +79,7 @@ if($request_token){
         //TODO: report
     }
 
-} elseif($url == 'http://hackerexperience.com/'){
+} elseif($url == $gameDomainProto.'/'){
     //echo 'Error while connecting to twitter';
     //TODO: report instead of echo
 }
@@ -105,13 +101,13 @@ if(isset($_SESSION['TYP'])){
         $script = '</script>';
     }
     
-    if($_SESSION['MSG_TYPE'] == 'error'){
+    if(($_SESSION['MSG_TYPE'] ?? '') == 'error'){
         $error = 'alert-danger';
     } else {
         $error = 'alert-success';
     }
-    
-    $msg = $_SESSION['MSG'];
+
+    $msg = $_SESSION['MSG'] ?? '';
     
     unset($_SESSION['MSG']);
     unset($_SESSION['TYP']);
@@ -136,19 +132,19 @@ if(isset($_SESSION['TYP'])){
         <meta property="og:locale" content="en_US">
         <meta property="og:locale:alternate" content="pt_BR">
         <meta property="og:title" content="Hacker Experience"/>
-        <meta property="og:image" content="https://hackerexperience.com/images/og.png"/>
-        <meta property="og:url" content="https://hackerexperience.com/"/>
+        <meta property="og:image" content="<?php echo $gameDomainProto; ?>/images/og.png"/>
+        <meta property="og:url" content="<?php echo $gameDomainProto; ?>/"/>
         <meta property="og:description" content="Hacker Experience is a browser-based hacking simulation game, where you play the role of a hacker seeking for money and power. Join now!"/>
-<?php } elseif ($_GET['fb_locale'] == 'pt_BR'){ ?>
+<?php } elseif (isset($_GET['fb_locale']) && $_GET['fb_locale'] == 'pt_BR'){ ?>
         <meta property="og:locale" content="pt_BR">
         <meta property="og:locale:alternate" content="en_US">
         <meta property="og:title" content="Hacker Experience"/>
-        <meta property="og:image" content="https://hackerexperience.com/images/ogbr.png"/>
-        <meta property="og:url" content="https://hackerexperience.com/"/>
+        <meta property="og:image" content="<?php echo $gameDomainProto; ?>/images/ogbr.png"/>
+        <meta property="og:url" content="<?php echo $gameDomainProto; ?>/"/>
         <meta property="og:description" content="Hacker Experience é um browser-game de simulação de hacking, onde você assume o papel de um hacker buscando dinheiro e poder. Cadastre-se agora!"/>
 <?php } ?>
         <link href="css/bootstrap.css" rel="stylesheet">
-        <link href="font-awesome/css/font-awesome.css" rel="stylesheet">
+        <link href="css/font-awesome.min.css" rel="stylesheet">
         <link href="css/he_index.css" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="css/tipTip.css">
         <script type="text/javascript">
@@ -177,8 +173,8 @@ if($l == 'pt_BR'){
                     <dt><a href="#"><span><img class="flag" src="images/<?php echo $current; ?>.png" alt="" /></span></a></dt>
                     <dd>
                         <ul>
-                            <li><a href="https://en.hackerexperience.com/"><img class="flag" src="images/en.png" alt="" /> English</a></li>
-                            <li><a href="https://br.hackerexperience.com/"><img class="flag" src="images/pt.png" alt="" /> Português</a></li>
+                            <li><a href="?lang=en"><img class="flag" src="images/en.png" alt="" /> English</a></li>
+                            <li><a href="?lang=pt"><img class="flag" src="images/pt.png" alt="" /> Português</a></li>
                         </ul>
                     </dd>
                 </dl>
@@ -240,6 +236,7 @@ if($msgLogin){
 ?>
                         <div id="container">
                             <form id="login-form" action="login" method="POST">
+                                <?php echo CSRF::field(); ?>
                                 <label for="username"><?php echo _('Username'); ?>:</label>
                                 <input class="login-input" type="text" id="login-username" name="username">
                                 <label for="password"><?php echo _('Password'); ?>:</label>
@@ -334,6 +331,7 @@ if($msgRegister){
 }
 ?>
                         <form class="form-horizontal" id="signup-form" action="register" method="POST">
+                            <?php echo CSRF::field(); ?>
                             <fieldset class="signup">
                                 <br/>
                                 <div class="form-group">
@@ -408,7 +406,7 @@ if($msgRegister){
                             <p><?php echo _('Here comes a <a href="http://www.paulgraham.com/gba.html">looong discussion</a>. Many believe the word <em>hacker</em> should designate the so-called white hat (talented programmer, or an ethical hacker). Others, assume it to mean criminals behind the screen.'); ?></p>
                             <p><?php echo _('<a href="http://duartes.org/gustavo/blog/post/first-recorded-usage-of-hacker/">History has shown us</a> that maybe it really was meant to define the bad guys, however we do believe that hacker means <a href="https://stallman.org/articles/on-hacking.html">way more</a> than that.'); ?></p>
                             <p><?php echo _('Regardless of definition, we want our users to enjoy the game, whether they call it Hacker or Cracker Experience. That\'s it, name whatever you want.'); ?></p>
-                            <p><?php echo _('Meanwhile, we have a special <a href="https://forum.hackerexperience.com/">board designated to teach computer science and programming</a> for people. Instead of engaging into useless flame wars, feel free to join and share your knowledge to others. I\'d call <em>that</em> hacker :)'); ?></p>
+                            <p><?php echo sprintf(_('Meanwhile, we have a special <a href="https://%s/">board designated to teach computer science and programming</a> for people. Instead of engaging into useless flame wars, feel free to join and share your knowledge to others. I\'d call <em>that</em> hacker :)'), $forumDomain); ?></p>
                         </div>                          
                     </div>
                     <div class="faq-buttons-intro">
@@ -428,9 +426,9 @@ if($msgRegister){
                     <h5 class="footer-title"><?php echo _('NAVIGATE'); ?></h5>
                     <ul>
                         <li><a target="__blank" href="privacy" class="scroll"><?php echo _('PRIVACY'); ?></a></li>
-                        <li><a href="http://status.hackerexperience.com/" class="scroll">STATUS</a></li>
-                        <li><a href="http://forum.hackerexperience.com/" class="scroll"><?php echo _('FORUM'); ?></a></li>
-                        <li><a href="http://wiki.hackerexperience.com/" class="scroll">WIKI</a></li>
+                        <li><a href="https://status.<?php echo $gameDomain; ?>/" class="scroll">STATUS</a></li>
+                        <li><a href="https://<?php echo $forumDomain; ?>/" class="scroll"><?php echo _('FORUM'); ?></a></li>
+                        <li><a href="<?php echo $wikiPath; ?>" class="scroll">WIKI</a></li>
                     </ul>
                 </div>
                 <div id="legal-disclaimer" class="three columns">
@@ -444,7 +442,7 @@ if($msgRegister){
                     <h5 class="footer-title"><?php echo _('CONTACT US'); ?></h5>
                     <div class="mail-link">
                         <a href="http://www.neoartlabs.com"><i class="fa fa-home"></i>www.neoartlabs.com</a><br/>
-                        <a href="mailto:<?php echo _('contact@hackerexperience.com'); ?>"><i class="fa fa-envelope-o"></i><?php echo _('contact@hackerexperience.com'); ?></a><br/>
+                        <a href="mailto:<?php echo $contactEmail; ?>"><i class="fa fa-envelope-o"></i><?php echo $contactEmail; ?></a><br/>
                     </div>
                     <div class="footer-social">
                         <a href="https://facebook.com/HackerExperience"><i class="fa fa-facebook-square"></i></a>

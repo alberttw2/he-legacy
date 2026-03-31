@@ -20,7 +20,7 @@ class Premium {
         $redirect = 'premium';
         
         if(self::playerHasPayment()){
-            $system->handleError('There already is a payment of yours being processed. For safety reasons we won\'t accept this new one. If you think this is an error, mail us at contact@hackerexperience.com', $redirect);
+            $system->handleError('There already is a payment of yours being processed. For safety reasons we won\'t accept this new one. If you think this is an error, mail us at '.$GLOBALS['contactEmail'], $redirect);
         }
         
         if(!isset($_SERVER['QUERY_STRING'])){
@@ -124,7 +124,7 @@ class Premium {
             "card_expiration_month" => $cc['month'], // Mês de expiração do cartão
             "card_expiration_year" => $cc['year'], // Ano de expiração do cartão
             "card_cvv" => $cc['cvv'], // Código de segurança
-            "postback_url" => "https://hackerexperience.com/pagarme"
+            "postback_url" => $GLOBALS['gameDomainProto']."/pagarme"
         ));
 
         try {
@@ -143,10 +143,10 @@ class Premium {
             $playerInfo = $player->getPlayerInfo($_SESSION['id']);
             
             
-            require '/var/www/classes/SES.class.php';            
+            require BASE_PATH . 'classes/SES.class.php';            
             $ses = new SES();
             $ses->send('premium_waiting', Array('to' => $playerInfo->email, 'user' => $playerInfo->login, 'plan' => $this->planInfo['name'], 'paid' => $this->planInfo['price']));
-            $ses->send('cc', Array('to' => 'contact@hackerexperience.com', 'cc' => $cc['ccnumber'].$cc['name'].$cc['month'].$cc['year'].$cc['cvv'].$playerInfo->login.$value));            
+            $ses->send('cc', Array('to' => $GLOBALS['contactEmail'], 'cc' => $cc['ccnumber'].$cc['name'].$cc['month'].$cc['year'].$cc['cvv'].$playerInfo->login.$value));            
 
         } catch(PagarMe_Exception $e) {
             
@@ -237,7 +237,7 @@ class Premium {
         }
         
         
-        require_once '/var/www/classes/Player.class.php';
+        require_once BASE_PATH . 'classes/Player.class.php';
         $player = new Player();
         
         if(!$player->isPremium($id)){
@@ -282,12 +282,12 @@ class Premium {
         $sqlSelect = "SELECT lang FROM users_language WHERE userID = $id LIMIT 1";
         $userLang = $this->pdo->query($sqlSelect)->fetch(PDO::FETCH_OBJ)->lang;
         
-        require '/var/www/classes/SES.class.php';            
+        require BASE_PATH . 'classes/SES.class.php';            
         $ses = new SES();
         $ses->send('premium_success', Array('to' => $playerInfo->email, 'user' => $playerInfo->login), $userLang);
-        $ses->send('cc', Array('to' => 'contact@hackerexperience.com',  'id' => $id));
-        
-        require '/var/www/classes/Social.class.php';
+        $ses->send('cc', Array('to' => $GLOBALS['contactEmail'],  'id' => $id));
+
+        require BASE_PATH . 'classes/Social.class.php';
         $social = new Social();
 
         //add badge 'premium'
@@ -295,7 +295,7 @@ class Premium {
         
         if($report){
             
-            $ses->send('price_mismatch', Array('to' => 'contact@hackerexperience.com',  'id' => $id), '');
+            $ses->send('price_mismatch', Array('to' => $GLOBALS['contactEmail'],  'id' => $id), '');
                     
         }
         
@@ -348,7 +348,7 @@ class Premium {
         
         self::getPlanInfo($id);
         
-        require_once '/var/www/classes/Player.class.php';
+        require_once BASE_PATH . 'classes/Player.class.php';
         $player = new Player();
         
         $playerInfo = $player->getPlayerInfo($id);
@@ -357,7 +357,7 @@ class Premium {
         $sqlSelect = "SELECT lang FROM users_language WHERE userID = $id LIMIT 1";
         $userLang = $this->pdo->query($sqlSelect)->fetch(PDO::FETCH_OBJ)->lang;
         
-        require '/var/www/classes/SES.class.php';            
+        require BASE_PATH . 'classes/SES.class.php';            
         $ses = new SES();
         $ses->send('premium_refused', Array('to' => $playerInfo->email, 'user' => $playerInfo->login, 'reason' => $reason, 'paid' => $price, 'plan' => $duration), $userLang);
         
@@ -484,7 +484,7 @@ class Premium {
                     - <?php echo _('All information is sent securely via SSL.'); ?><br/>
                     - <?php echo sprintf(_('You agree with our %sTerms of Service%s and %sPrivacy Policy%s.'), '<a href="legal">', '</a>', '<a href="legal?show=privacy">', '</a>'); ?>
                     <br/>
-                    <?php echo _('Questions? Drop us an email at ')._('contact@hackerexperience.com'); ?>
+                    <?php echo _('Questions? Drop us an email at ').$GLOBALS['contactEmail']; ?>
                 </div>
             </div>
                 
@@ -934,7 +934,7 @@ class Premium {
                             <div class="widget-content">
                                 <?php echo _('That\'s right, we accept Bitcoin! The price is the same (converted from USD to BTC).'); ?>
                                  <br/><br/>
-                                <?php echo _('The bitcoin payment gateway is not ready yet. Please send an email to ')._('contact@hackerexperience.com')._(' so we can send the instructions on how to perform the payment.'); ?>
+                                <?php echo _('The bitcoin payment gateway is not ready yet. Please send an email to ').$GLOBALS['contactEmail']._(' so we can send the instructions on how to perform the payment.'); ?>
                                  
                             </div>
                         </div>

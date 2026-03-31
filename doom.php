@@ -1,9 +1,10 @@
 <?php
+require_once __DIR__ . "/config.php";
 
-require '/var/www/classes/Session.class.php';
-require '/var/www/classes/System.class.php';
-require '/var/www/classes/Storyline.class.php';
-require '/var/www/classes/Process.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/System.class.php';
+require BASE_PATH . 'classes/Storyline.class.php';
+require BASE_PATH . 'classes/Process.class.php';
 
 $session = new Session();
 $system = new System();
@@ -28,6 +29,7 @@ if($system->issetGet('show')){
 
 <div class="span12">
 <?php
+require_once __DIR__ . "/config.php";
 
 if($session->issetMsg()){
     $session->returnMsg();
@@ -44,6 +46,7 @@ if($session->issetMsg()){
         </div>
         <div class="widget-content padding noborder">
 <?php
+require_once __DIR__ . "/config.php";
 
 $storyline = new Storyline();
 $storyline->doom_displayProgress($display);
@@ -53,6 +56,7 @@ $storyline->doom_displayProgress($display);
         <div class="nav nav-tabs" style="clear: both;">
     </div>
 <?php
+require_once __DIR__ . "/config.php";
 
 require 'template/contentEnd.php';
 

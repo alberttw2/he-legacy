@@ -1,13 +1,14 @@
 <?php
+require_once __DIR__ . "/config.php";
 die("DEPRECATED");
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
     
-    require '/var/www/classes/Session.class.php';
-    require '/var/www/classes/Player.class.php';
-    require '/var/www/classes/PC.class.php';
-    require '/var/www/classes/Finances.class.php';
-    require '/var/www/classes/Ranking.class.php';
-    require '/var/www/classes/Process.class.php';
+    require BASE_PATH . 'classes/Session.class.php';
+    require BASE_PATH . 'classes/Player.class.php';
+    require BASE_PATH . 'classes/PC.class.php';
+    require BASE_PATH . 'classes/Finances.class.php';
+    require BASE_PATH . 'classes/Ranking.class.php';
+    require BASE_PATH . 'classes/Process.class.php';
     
     $software = new SoftwareVPC();
     $finances = new Finances();

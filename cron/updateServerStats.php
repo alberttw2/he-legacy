@@ -1,6 +1,7 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 
-require '/var/www/classes/PDO.class.php';
+require_once BASE_PATH . 'classes/PDO.class.php';
 
 $pdo = PDO_DB::factory();
 

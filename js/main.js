@@ -2447,25 +2447,4 @@ $(document).ready(function(){
         $('#content-header .btn-group').css({width:cwidth,'margin-left':'-' + uwidth / 2 + 'px'});
     }
 
-    if($('#lower-ad').length > 0){
-        if($('#lower-ad').height() == 0){
-
-            $.ajax({
-            type: "POST",
-            url: "ajax.php",
-            data: {func: 'gettext', id:'adb'}, 
-            success:
-                function(data) {
-
-                    modalInfo = $.parseJSON(data.msg);
-
-                    $('#lower-ad').html(modalInfo[0].title);
-
-                }
-
-            });
-
-        }
-    }
-
 });

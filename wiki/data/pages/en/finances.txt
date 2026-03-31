@@ -1,1 +1,0 @@
-The Finances page lists your total money, your [[en:npc#banks|bank]] accounts and your [[en:bitcoin]] wallet information.

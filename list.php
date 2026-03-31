@@ -1,13 +1,13 @@
 <?php
 
-require '/var/www/classes/Session.class.php';
 require 'config.php';
-require '/var/www/classes/System.class.php';
-require '/var/www/classes/Player.class.php';
-require '/var/www/classes/PC.class.php';
-require '/var/www/classes/List.class.php';
-require_once '/var/www/classes/Finances.class.php';
-require_once '/var/www/classes/Ranking.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/System.class.php';
+require BASE_PATH . 'classes/Player.class.php';
+require BASE_PATH . 'classes/PC.class.php';
+require BASE_PATH . 'classes/List.class.php';
+require_once BASE_PATH . 'classes/Finances.class.php';
+require_once BASE_PATH . 'classes/Ranking.class.php';
 
 $session = new Session();
 $system = new System();

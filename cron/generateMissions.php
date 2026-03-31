@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 
 if(php_sapi_name() != 'cli') exit();
 function randString($length, $charset='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'){
@@ -12,7 +13,7 @@ function randString($length, $charset='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno
 
 }
 
-require '/var/www/classes/PDO.class.php';
+require_once BASE_PATH . 'classes/PDO.class.php';
 
 $pdo = PDO_DB::factory();
 
@@ -256,6 +257,38 @@ function generateMissions($level, $total, $pdo){
         $sqlQuery = "INSERT INTO missions (id, type, status, hirer, victim, info, newInfo, info2, newInfo2, prize, level) VALUES ('', ?, 1, ?, ?, ?, ?, ?, ?, ?, ?)";
         $sqlReg = $pdo->prepare($sqlQuery);
         $sqlReg->execute(array($type, $hirer, $victim, $info, $newInfo, $info2, $newInfo2, $prize, $level));
+
+        // Pre-generate mission seed so it's ready when a player accepts the mission
+        $missionID = $pdo->lastInsertId();
+        $missionType = $type;
+
+        $limitArr = Array(3, 3, 4, 3, 3, 3, 0);
+        switch($missionType){
+            case 1:
+            case 2:
+                $limitArr[6] = 3;
+                break;
+            case 3:
+                $limitArr[2] = 2;
+                $limitArr[5] = 2;
+                break;
+            case 4:
+                $limitArr[2] = 2;
+                $limitArr[5] = 2;
+                break;
+            case 5:
+                $limitArr[2] = 2;
+                break;
+        }
+
+        $seedArr = Array();
+        for($s = 0; $s < count($limitArr); $s++){
+            $seedArr[$s] = rand(1, $limitArr[$s]);
+        }
+
+        $sqlSeed = "INSERT INTO missions_seed (missionID, greeting, intro, victim_call, payment, victim_location, warning, action) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmtSeed = $pdo->prepare($sqlSeed);
+        $stmtSeed->execute(array($missionID, $seedArr[0], $seedArr[1], $seedArr[2], $seedArr[3], $seedArr[4], $seedArr[5], $seedArr[6]));
 
         $i++;
 

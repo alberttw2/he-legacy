@@ -2,14 +2,14 @@
 
 // 2019: This is the most complex part of Legacy and HE2.
 
-require_once '/var/www/classes/Session.class.php';
-require_once '/var/www/classes/Player.class.php';
-require_once '/var/www/classes/PC.class.php';
-require_once '/var/www/classes/System.class.php';
-require_once '/var/www/classes/NPC.class.php';
-require_once '/var/www/classes/List.class.php';
-require_once '/var/www/classes/Finances.class.php';
-require_once '/var/www/classes/Ranking.class.php';
+require_once BASE_PATH . 'classes/Session.class.php';
+require_once BASE_PATH . 'classes/Player.class.php';
+require_once BASE_PATH . 'classes/PC.class.php';
+require_once BASE_PATH . 'classes/System.class.php';
+require_once BASE_PATH . 'classes/NPC.class.php';
+require_once BASE_PATH . 'classes/List.class.php';
+require_once BASE_PATH . 'classes/Finances.class.php';
+require_once BASE_PATH . 'classes/Ranking.class.php';
 
 class Process {
 
@@ -96,8 +96,11 @@ class Process {
      
    public function listProcesses($uid, $type){
 
+        // Auto-redistribute resources for completed processes
+        self::redistributeCompleted($uid);
+
         switch($type){
-            
+
             case 'all':
                 $str = '';
                 $str2 = ', cpuUsage, netUsage';
@@ -116,21 +119,35 @@ class Process {
         if($this->player->verifyID($uid)){
 
             $this->session->newQuery();
-            $sqlSelect = "SELECT pid, pvictimid, paction, psoftid, pinfo, plocal, pnpc, isPaused, TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) AS pTimeLeft $str2 FROM processes WHERE pcreatorid = $uid $str ORDER BY ptimeend DESC";
-            $data = $this->pdo->query($sqlSelect);
-            
-            if($data->rowCount() != '0'){
+            $sqlSelect = "SELECT pid, pvictimid, paction, psoftid, pinfo, plocal, pnpc, isPaused, pTimeIdeal, priority, TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) AS pTimeLeft $str2 FROM processes WHERE pcreatorid = $uid $str ORDER BY ptimeend DESC";
+            $data = $this->pdo->query($sqlSelect)->fetchAll();
 
-                ?>
+            if(count($data) > 0){
 
-                <ul class="list">
+                // Task 1: Group processes by type (NET vs CPU)
+                $netProcs = array_filter($data, function($p) { return $p['paction'] == 1 || $p['paction'] == 2; });
+                $cpuProcs = array_filter($data, function($p) { return $p['paction'] != 1 && $p['paction'] != 2; });
+                $activeNetCount = count(array_filter($netProcs, function($p) { return $p['ptimeleft'] > 0 && $p['ispaused'] == 0; }));
+                $activeCpuCount = count(array_filter($cpuProcs, function($p) { return $p['ptimeleft'] > 0 && $p['ispaused'] == 0; }));
 
-                <?php
-                
                 $scriptArr = Array();
-                
                 $i=0;
-                while($pInfo = $data->fetch(PDO::FETCH_OBJ)){
+                $groupedData = [];
+                if (!empty($netProcs)) {
+                    $groupedData[] = ['header' => '<span class="he16-net"></span> ' . _('Network Processes (Downloads/Uploads)'), 'procs' => $netProcs, 'activeCount' => $activeNetCount, 'isNet' => true];
+                }
+                if (!empty($cpuProcs)) {
+                    $groupedData[] = ['header' => '<span class="he16-cpu"></span> ' . _('CPU Processes (Hacks/Installs/Research)'), 'procs' => $cpuProcs, 'activeCount' => $activeCpuCount, 'isNet' => false];
+                }
+
+                foreach ($groupedData as $group) {
+                ?>
+                <h5 style="margin:10px 0 5px 0;color:#999;"><?php echo $group['header']; ?></h5>
+                <ul class="list">
+                <?php
+                foreach($group['procs'] as $_row){ $pInfo = (object)$_row;
+                $isNetProcess = $group['isNet'];
+                $activeCountForType = $group['activeCount'];
 
                     ?>  
                     
@@ -309,7 +326,41 @@ class Process {
                         echo _('Paused');
                     }
                     ?>
-                        
+
+                    <?php if ($pInfo->ispaused == 0): ?>
+                        <?php if ($timeLeft > 0): ?>
+                            <div class="process-time-info" style="text-align:center;font-size:11px;color:#999;margin-top:2px;">
+                                <?php
+                                $mins = floor($timeLeft / 60);
+                                $secs = $timeLeft % 60;
+                                echo $mins > 0 ? $mins . 'm ' . $secs . 's' : $secs . 's';
+                                echo ' ' . _('remaining');
+                                ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="process-time-info" style="text-align:center;font-size:11px;color:#259D1C;margin-top:2px;">
+                                <strong>&#10003; <?php echo _('Complete'); ?></strong>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                    <?php
+                    // Task 3 & 4: Time estimation and resource stats
+                    if($timeLeft > 0 && $pInfo->ispaused == 0){
+                        $resourceUsage = $isNetProcess ? $pInfo->netusage : $pInfo->cpuusage;
+                        $resourceType = $isNetProcess ? 'NET' : 'CPU';
+                    ?>
+                    <div class="process-stats" style="font-size:10px;color:#888;margin-top:3px;">
+                        <?php echo sprintf(_('Using %s%% %s'), round($resourceUsage), $resourceType); ?>
+                        <?php if($pInfo->ptimeideal > 0 && $activeCountForType > 1): ?>
+                            &middot; <?php echo sprintf(_('Ideal: %ss'), $pInfo->ptimeideal); ?>
+                            &middot; <?php echo sprintf(_('Sharing with %d other %s'), $activeCountForType - 1, $activeCountForType - 1 == 1 ? _('process') : _('processes')); ?>
+                        <?php endif; ?>
+                    </div>
+                    <?php
+                    }
+                    ?>
+
                     </div>
                     <div class="span3 proc-action">
                         <div class="span6">                        
@@ -361,14 +412,18 @@ class Process {
                         <div class="span6"  style="text-align: right;">  
                             
                                 <?php if($link != ''){ ?>
-                                <span class="he16-cog heicon" title="Priority Manager (coming soon)"></span> 
+                                <a href="processes?pid=<?php echo $pInfo->pid; ?>&action=priority" title="<?php echo ($pInfo->priority > 1) ? _('Set Normal Priority') : _('Set High Priority'); ?>">
+                                    <span class="he16-cog heicon" style="<?php echo ($pInfo->priority > 1) ? 'color:green;' : ''; ?>"></span>
+                                </a>
                                 <?php } ?>
                                 
-                                <?php if($pInfo->ispaused == 1){ ?>
-                                    <a href="processes?pid=<?php echo $pInfo->pid; ?>&action=resume"><span class="he16-play heicon"></span></a>
-                                <?php } else { ?>
-                                    <a href="processes?pid=<?php echo $pInfo->pid; ?>&action=pause"><span class="he16-pause heicon"></span></a>
-                                <?php } ?> 
+                                <?php if($timeLeft > 0){ ?>
+                                    <?php if($pInfo->ispaused == 1){ ?>
+                                        <a href="processes?pid=<?php echo $pInfo->pid; ?>&action=resume"><span class="he16-play heicon"></span></a>
+                                    <?php } else { ?>
+                                        <a href="processes?pid=<?php echo $pInfo->pid; ?>&action=pause"><span class="he16-pause heicon"></span></a>
+                                    <?php } ?>
+                                <?php } ?>
                                 <a href="processes?pid=<?php echo $pInfo->pid; ?>&del=1"><span class="he16-cancel heicon"></span></a><br/>
                                 <span id="complete<?php echo $pInfo->pid; ?>"></span>
                                 <?php                                
@@ -398,18 +453,25 @@ class Process {
                     }
                     
                     $i++;
-                    
+
                 }
-                                
+
                 ?>
 
-                </ul>            
+                </ul>
 
-                <?php    
+                <?php
+                } // end foreach groupedData
+                ?><?php    
                     
             } else {
 
-                echo _('No process found');
+                ?>
+                <div class="alert alert-info">
+                    <strong><?php echo _('No active processes.'); ?></strong>
+                    <?php echo _('Start a download, upload, or hack to see it here.'); ?>
+                </div>
+                <?php
 
             }
 
@@ -847,34 +909,41 @@ class Process {
             $this->session->newQuery();
             
             $sql =  "
-                    SELECT pid, ".$column.", pAction, pSoftID, pTimeIdeal, TIMESTAMPDIFF(SECOND, pTimeStart, NOW()) AS pDuration
+                    SELECT pid, ".$column.", pAction, pSoftID, pTimeIdeal, priority, TIMESTAMPDIFF(SECOND, pTimeStart, NOW()) AS pDuration
                     FROM processes
                     WHERE pCreatorID = :id AND ".$column." <> 0 AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) > 0 AND isPaused = 0
                     ";
-            
+
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute(array(':id' => $_SESSION['id']));
             $pInfo = $stmt->fetchAll();
-            
+
             $totalProcesses = count($pInfo);
-            
+
             if($totalProcesses > 0){
-                
-                $oldUsage = 100 / $totalProcesses;
-                $newUsage = 100 / ($totalProcesses + 1);
-                
+
+                // Priority-weighted share: high priority (2) counts as 2 units, normal (1) as 1
+                $totalWeight = 1; // new process starts at normal priority (1 unit)
+                for($i=0;$i<$totalProcesses;$i++){
+                    $totalWeight += max(1, (int)$pInfo[$i]['priority']);
+                }
+                $newProcessUsage = (1 / $totalWeight) * 100; // new process gets normal weight
+
                 for($i=0;$i<$totalProcesses;$i++){
 
-                    $additionalTime = ($pInfo[$i]['ptimeideal']*100)/$newUsage - $pInfo[$i]['pduration'];
-                    
+                    $weight = max(1, (int)$pInfo[$i]['priority']);
+                    $weightedUsage = ($weight / $totalWeight) * 100;
+                    $additionalTime = ($pInfo[$i]['ptimeideal']*100)/$weightedUsage - $pInfo[$i]['pduration'];
+
                     $this->session->newQuery();
-                    $sql = "UPDATE processes SET ".$column." = '".$newUsage."', pTimeEnd = DATE_ADD(NOW(), INTERVAL $additionalTime SECOND) 
+                    $sql = "UPDATE processes SET ".$column." = '".$weightedUsage."', pTimeEnd = DATE_ADD(NOW(), INTERVAL $additionalTime SECOND)
                             WHERE pid = '".$pInfo[$i]['pid']."' LIMIT 1";
 
                     $this->pdo->query($sql);
-                    
+
                 }
 
+                $newUsage = $newProcessUsage;
                 $return['ADDITIONAL_TIME'] = ($pDuration / ($newUsage/100)) - $pDuration;
 
             } else {
@@ -1010,8 +1079,55 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
         }
         
     }
-    
-    
+
+    /**
+     * Redistribute NET/CPU usage among active processes when some have completed.
+     * Ensures remaining processes speed up immediately without waiting for manual "Complete".
+     */
+    public function redistributeCompleted($uid) {
+        foreach (['netUsage', 'cpuUsage'] as $column) {
+            $stmt = $this->pdo->prepare(
+                "SELECT COUNT(*) FROM processes WHERE pCreatorID = :uid AND $column > 0
+                 AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) <= 0 AND isPaused = 0"
+            );
+            $stmt->execute([':uid' => $uid]);
+            if ((int)$stmt->fetchColumn() == 0) continue;
+
+            $stmt = $this->pdo->prepare(
+                "SELECT pid, $column as share, pTimeIdeal, priority, TIMESTAMPDIFF(SECOND, pTimeStart, NOW()) AS elapsed
+                 FROM processes WHERE pCreatorID = :uid AND $column > 0
+                 AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) > 0 AND isPaused = 0"
+            );
+            $stmt->execute([':uid' => $uid]);
+            $active = $stmt->fetchAll();
+
+            $activeCount = count($active);
+            if ($activeCount == 0) {
+                $this->pdo->prepare("UPDATE processes SET $column = 0 WHERE pCreatorID = :uid AND $column > 0 AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) <= 0")
+                    ->execute([':uid' => $uid]);
+                continue;
+            }
+
+            // Priority-weighted share: high priority (2) counts as 2 units, normal (1) as 1 unit
+            $totalWeight = 0;
+            foreach ($active as $proc) {
+                $totalWeight += max(1, (int)$proc['priority']);
+            }
+
+            foreach ($active as $proc) {
+                $weight = max(1, (int)$proc['priority']);
+                $newUsage = ($weight / $totalWeight) * 100;
+                $newTotal = $proc['ptimeideal'] / ($newUsage / 100);
+                $newRemaining = max(1, round($newTotal - $proc['elapsed']));
+                $this->pdo->prepare("UPDATE processes SET $column = :usage, pTimeEnd = DATE_ADD(NOW(), INTERVAL :rem SECOND) WHERE pid = :pid")
+                    ->execute([':usage' => $newUsage, ':rem' => $newRemaining, ':pid' => $proc['pid']]);
+            }
+
+            $this->pdo->prepare("UPDATE processes SET $column = 0 WHERE pCreatorID = :uid AND $column > 0 AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) <= 0")
+                ->execute([':uid' => $uid]);
+        }
+    }
+
     public function resourceableInfo($action){
         
         $return = Array();
@@ -1855,7 +1971,7 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
         
         $playerInfo = $this->player->getPlayerInfo($this->pCreatorID);
 
-        require_once '/var/www/classes/Mission.class.php'; 
+        require_once BASE_PATH . 'classes/Mission.class.php'; 
 
         $this->mission = new Mission();
         
@@ -1884,9 +2000,9 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                             if($hddInfo['TOTAL'] >= $hddInfo['USED'] + $softInfo->softsize){
             
                                 $this->session->newQuery();
-                                $sqlQuery = "INSERT INTO software (id, softHidden, softHiddenWith, softLastEdit, softName, softSize, softType, softVersion, userID, isNPC, originalFrom, licensedTo) VALUES ('', '0', '0', NOW(), ?, ?, ?, ?, ?, '0', ?, ?)";
+                                $sqlQuery = "INSERT INTO software (id, softHidden, softHiddenWith, softLastEdit, softName, softSize, softRam, softType, softVersion, userID, isNPC, originalFrom, licensedTo) VALUES ('', '0', '0', NOW(), ?, ?, ?, ?, ?, ?, '0', ?, ?)";
                                 $sqlDown = $this->pdo->prepare($sqlQuery);
-                                $sqlDown->execute(array($softInfo->softname, $softInfo->softsize, $softInfo->softtype, $softInfo->softversion, $_SESSION['id'], $this->pSoftID, $softInfo->licensedto));
+                                $sqlDown->execute(array($softInfo->softname, $softInfo->softsize, $softInfo->softram, $softInfo->softtype, $softInfo->softversion, $_SESSION['id'], $this->pSoftID, $softInfo->licensedto));
                                 $softInsertID = $this->pdo->lastInsertId();
                                 
                                 if($softInfo->softtype == 1 && $softInfo->softversion >= 9200){
@@ -1901,7 +2017,7 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                                     
                                     if($valid){
                                     
-                                        require_once '/var/www/classes/Mission.class.php';
+                                        require_once BASE_PATH . 'classes/Mission.class.php';
                                         $mission = new Mission();                                    
 
                                         if($this->session->issetMissionSession()){
@@ -1918,7 +2034,7 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                                 
                                 if($softInfo->softtype == 29){
 
-                                    require_once '/var/www/classes/Mission.class.php';
+                                    require_once BASE_PATH . 'classes/Mission.class.php';
                                     $mission = new Mission();                                    
                                     
                                     if($this->session->issetMissionSession()){
@@ -2006,7 +2122,7 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
 	
                             $this->session->newQuery();
                             $sqlSelect = "SELECT id FROM software WHERE userId = '".$this->pVictimID."' AND softType = $softInfo->softtype AND softVersion = $softInfo->softversion AND isNPC = $this->pNPC AND softName = '".$softInfo->softname."' LIMIT 1";
-                            $sqlQuery = "INSERT INTO software (id, softHidden, softHiddenWith, softLastEdit, softName, softSize, softType, softVersion, userID, isNPC, originalFrom, licensedTo) VALUES ('', '0', '0', NOW(), ?, ?, ?, ?, ?, ?, ?, ?)";
+                            $sqlQuery = "INSERT INTO software (id, softHidden, softHiddenWith, softLastEdit, softName, softSize, softRam, softType, softVersion, userID, isNPC, originalFrom, licensedTo) VALUES ('', '0', '0', NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                             
                             $rowsReturned = $this->pdo->query($sqlSelect)->fetchAll();
 
@@ -2017,12 +2133,12 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
 
                                     $this->session->newQuery();
                                     $sqlDown = $this->pdo->prepare($sqlQuery);
-                                    $sqlDown->execute(array($softInfo->softname, $softInfo->softsize, $softInfo->softtype, $softInfo->softversion, $this->pVictimID, $this->pNPC, $this->pSoftID, $softInfo->licensedto));
+                                    $sqlDown->execute(array($softInfo->softname, $softInfo->softsize, $softInfo->softram, $softInfo->softtype, $softInfo->softversion, $this->pVictimID, $this->pNPC, $this->pSoftID, $softInfo->licensedto));
                                     $softInsertID = $this->pdo->lastInsertId();
                                     
                                     if($softInfo->softtype == 1 && $softInfo->softversion >= 9200 && $this->pNPC == 0){
                                     
-                                        require_once '/var/www/classes/Mission.class.php';
+                                        require_once BASE_PATH . 'classes/Mission.class.php';
                                         $mission = new Mission();                                    
 
                                         
@@ -2043,7 +2159,7 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                                         
                                         if($this->pNPC == 0){ //upando em um VPC
                                         
-                                            require_once '/var/www/classes/Mission.class.php';
+                                            require_once BASE_PATH . 'classes/Mission.class.php';
                                             $mission = new Mission();                                             
                                             
                                             if($mission->playerOnMission($this->pVictimID)){
@@ -2066,7 +2182,7 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                                                     
                                                     if($this->mission->issetMission($_SESSION['MISSION_ID'])){
 
-                                                        require '/var/www/classes/Clan.class.php';
+                                                        require BASE_PATH . 'classes/Clan.class.php';
                                                         $clan = new Clan();
 
                                                         if($clan->playerHaveClan()){
@@ -2203,7 +2319,7 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                                 $uid = $this->pVictimID;
                                 $npc = $this->pNPC;
                                 
-                                require_once '/var/www/classes/Storyline.class.php';
+                                require_once BASE_PATH . 'classes/Storyline.class.php';
                                 $storyline = new Storyline();
   
                                 $odds = (5 + (($softInfo->softversion)/10))*10;
@@ -2314,7 +2430,7 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                                 
                                 if($softInfo->softtype == 18){
 
-                                    require_once '/var/www/classes/Internet.class.php';
+                                    require_once BASE_PATH . 'classes/Internet.class.php';
                                     $internet = new Internet();
                                     
                                     $internet->webserver_shutdown($uid);
@@ -2477,10 +2593,10 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                     
                     $this->session->newQuery();
                     $sql = "SELECT id, softVersion, softname, originalFrom FROM software WHERE userID = '".$victimID."' AND softType > 95 AND isNPC = '".$isNPC."'";
-                    $data = $this->pdo->query($sql);
+                    $data = $this->pdo->query($sql)->fetchAll();
 
                     $total = '0';
-                    while($virusInfo = $data->fetch(PDO::FETCH_OBJ)){
+                    foreach($data as $_row){ $virusInfo = (object)$_row;
 
                         if($virusInfo->softversion <= $avInfo->softversion){
 
@@ -2942,7 +3058,7 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                                     
                                     if($softInfo->softtype == 18){
                                         
-                                        require_once '/var/www/classes/Internet.class.php';
+                                        require_once BASE_PATH . 'classes/Internet.class.php';
                                         $internet = new Internet();
                                         
                                         $internet->webserver_shutdown($id);
@@ -3787,7 +3903,7 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                     break;
                 case '28': //edit webserver
                     
-                    require '/var/www/classes/Internet.class.php';
+                    require BASE_PATH . 'classes/Internet.class.php';
                     $internet = new Internet();
                     
                     if($this->pVictimID == 0){
@@ -3840,9 +3956,6 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
     
     public function pauseProcess($pid){
         
-       if($_SESSION['id'] != 1)
-            $this->system->handleError('Sorry, the option to pause processes is temporarily disabled. They wont be automatically completed if you are at the Task Manager tab.', 'processes');
-
         $this->session->newQuery();
         $sql = "SELECT TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) AS pTimeLeft
                 FROM processes 
@@ -3868,6 +3981,31 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
         
     }
     
+    public function togglePriority($pid){
+
+        $this->session->newQuery();
+        $sql = "SELECT priority, pAction, pCreatorID, TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) AS pTimeLeft
+                FROM processes WHERE pid = :pid LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':pid' => $pid]);
+        $proc = $stmt->fetch(PDO::FETCH_OBJ);
+
+        if(!$proc || $proc->ptimeleft <= 0){
+            return;
+        }
+
+        // Toggle: 1 (normal) -> 2 (high), 2 (high) -> 1 (normal)
+        $newPriority = ($proc->priority > 1) ? 1 : 2;
+
+        $this->session->newQuery();
+        $sql = "UPDATE processes SET priority = :priority WHERE pid = :pid LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':priority' => $newPriority, ':pid' => $pid]);
+
+        // Redistribute to apply new priority weights
+        self::redistributeCompleted($proc->pcreatorid);
+    }
+
     public function resumeProcess($pid){
         
         $this->session->newQuery();
@@ -3939,6 +4077,29 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
         
     }
     
+    /**
+     * Scale process time based on player hardware.
+     * Formula: effective_time = base_time * (1000 / (1000 + hardware_value))
+     * With 1000 MHz hardware, time is halved. With 2000 MHz, time is 33% of base.
+     * @param float $baseTime The base duration in seconds
+     * @param string $hwType 'CPU' or 'NET'
+     * @return float Scaled duration
+     */
+    private function applyHardwareScaling($baseTime, $hwType) {
+        if (!isset($_SESSION['hw_cache']) || !isset($_SESSION['hw_cache'][$hwType])) {
+            $hwInfo = $this->hardware->getHardwareInfo($_SESSION['id'], 'VPC');
+            $_SESSION['hw_cache'] = [
+                'CPU' => isset($hwInfo['CPU']) ? (int)$hwInfo['CPU'] : 0,
+                'NET' => isset($hwInfo['NET']) ? (int)$hwInfo['NET'] : 0,
+            ];
+        }
+        $hwValue = $_SESSION['hw_cache'][$hwType];
+        if ($hwValue <= 0) {
+            return $baseTime;
+        }
+        return $baseTime * (1000 / (1000 + $hwValue));
+    }
+
     public function calculateDuration($pAction, $id, $pcType, $info = ''){
 
         if(!is_numeric($pAction)){
@@ -4030,7 +4191,7 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                 
                 return $time;
             case 7: //av
-                return 200;
+                return $this->applyHardwareScaling(200, 'CPU');
                 break;
             case 8: //edit log
                 
@@ -4155,9 +4316,9 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                 
                 return $time;
             case 15: //port scan
-                return 30;
+                return $this->applyHardwareScaling(30, 'CPU');
             case 16: //exploit
-                return 60;
+                return $this->applyHardwareScaling(60, 'CPU');
             case 17: //research
                 
                 $time = 0;
@@ -4187,28 +4348,28 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                 if($time == 0){
                     $time = $base + $increment*$totalIncrements;
                 }
-                
-                return $time;
-            case 18:
-                return 100;
-            case 19:
-                return 100;
-            case 20:
-                return 100;
+
+                return $this->applyHardwareScaling($time, 'CPU');
+            case 18: //upload XHD
+                return $this->applyHardwareScaling(100, 'NET');
+            case 19: //download XHD
+                return $this->applyHardwareScaling(100, 'NET');
+            case 20: //delete XHD
+                return $this->applyHardwareScaling(100, 'CPU');
             case 21:
-                return 200;
-            case 22:
-                return 30;
-            case 23:
-                return 60;
-            case 24:
-                return 60;
-            case 25:
-                return 600;
-            case 28:
-                return 30;
-            case 10:
-                return 40;
+                return $this->applyHardwareScaling(200, 'CPU');
+            case 22: //nmap
+                return $this->applyHardwareScaling(30, 'CPU');
+            case 23: //analyze
+                return $this->applyHardwareScaling(60, 'CPU');
+            case 24: //install doom
+                return $this->applyHardwareScaling(60, 'CPU');
+            case 25: //reset IP
+                return $this->applyHardwareScaling(600, 'CPU');
+            case 28: //install webserver
+                return $this->applyHardwareScaling(30, 'CPU');
+            case 10: //format
+                return $this->applyHardwareScaling(40, 'CPU');
 	    default:
 		return 60;    
                 //die("Missing duratiopn");

@@ -1,5 +1,5 @@
 <?php
-require_once '/var/www/classes/List.class.php';
+require_once BASE_PATH . 'classes/List.class.php';
 
 class Mission {
 
@@ -499,7 +499,7 @@ class Mission {
                 break;
             case 51: //downloaded doom
 
-                require '/var/www/classes/Clan.class.php';
+                require BASE_PATH . 'classes/Clan.class.php';
                 $clan = new Clan();
                 if($clan->playerHaveClan()){
                     $haveClan = TRUE;
@@ -532,7 +532,7 @@ class Mission {
                 break;
             case 53: //someone uploaded doom
 
-                require '/var/www/classes/Clan.class.php';
+                require BASE_PATH . 'classes/Clan.class.php';
                 $clan = new Clan();
                 if($clan->playerHaveClan()){
                     $haveClan = TRUE;
@@ -1090,14 +1090,6 @@ class Mission {
 @media (min-width:1824px) { .adslot_mission { width: 336px; height: 280px; } }
 </style>
 <div class="center">
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<!-- missions responsive -->
-<ins class="adsbygoogle adslot_mission"
-     style="display:inline-block"
-     data-ad-client="ca-pub-7193007468156667"
-     data-ad-slot="7907947758"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
 </script>
 </div>
 <?php } ?>
@@ -1113,13 +1105,13 @@ class Mission {
         
         $this->session->newQuery();
         $sql = "SELECT completed, prize FROM missions_history WHERE userID = '".$id."'";
-        $data = $this->pdo->query($sql);
-        
+        $data = $this->pdo->query($sql)->fetchAll();
+
         $total = 0;
         $completed = 0;
         $reward = 0;
-        
-        while($missionInfo = $data->fetch(PDO::FETCH_OBJ)){
+
+        foreach($data as $_row){ $missionInfo = (object)$_row;
             $total++;
             if($missionInfo->completed == 1){
                 $completed++;
@@ -1222,12 +1214,12 @@ class Mission {
                 break;
             case 84:
                 
-                require '/var/www/classes/Storyline.class.php';
+                require BASE_PATH . 'classes/Storyline.class.php';
                 $storyline = new Storyline();
                 
                 $storyline->tutorial_setExpireDate(self::missionVictim($_SESSION['MISSION_ID']), self::missionInfo2($_SESSION['MISSION_ID']));
                 
-                require '/var/www/classes/Mail.class.php';
+                require BASE_PATH . 'classes/Mail.class.php';
                 $mail = new Mail();
                 $mail->sendGreetingMail();
                 
@@ -1579,7 +1571,7 @@ class Mission {
         
         if(self::countCompletedMissions() > 0){
 
-            require_once '/var/www/classes/Pagination.class.php';
+            require_once BASE_PATH . 'classes/Pagination.class.php';
             $pagination = new Pagination();
 
             $pagination->paginate($_SESSION['id'], 'missionsHistory', '10', 'view=completed&page', 1);
@@ -1678,7 +1670,7 @@ class Mission {
             $this->session->newQuery();
             $sql = "SELECT COUNT(*) AS total FROM missions_history WHERE completed = 0 AND userID = '".$_SESSION['id']."'";
             if($this->pdo->query($sql)->fetch(PDO::FETCH_OBJ)->total == 5){
-                require '/var/www/classes/Social.class.php';
+                require BASE_PATH . 'classes/Social.class.php';
                 $social = new Social();
                 $social->badge_add(58, $_SESSION['id']);
             }
@@ -1838,7 +1830,7 @@ class Mission {
             switch($to){
                 case 81:
                     
-                    require_once '/var/www/classes/PC.class.php';
+                    require_once BASE_PATH . 'classes/PC.class.php';
                     
                     $player = new Player();
                     $log = new LogVPC();

@@ -1,10 +1,10 @@
 <?php
 
 require 'config.php';
-require '/var/www/classes/Session.class.php';
-require '/var/www/classes/Player.class.php';
-require '/var/www/classes/Storyline.class.php';
-require '/var/www/classes/News.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/Player.class.php';
+require BASE_PATH . 'classes/Storyline.class.php';
+require BASE_PATH . 'classes/News.class.php';
 
 $session = new Session();
 $system = new System();

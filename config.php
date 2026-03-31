@@ -1,6 +1,17 @@
 <?php
 
-$wikiPath = 'http://localhost/wiki/';
+define('BASE_PATH', __DIR__ . '/');
+
+// Composer autoloader (loads classes/ via classmap + vendor packages)
+if (file_exists(BASE_PATH . 'vendor/autoload.php')) {
+    require_once BASE_PATH . 'vendor/autoload.php';
+}
+
+$gameDomain = 'minion.twentic.com:8080';
+$gameDomainProto = 'https://' . $gameDomain;
+$wikiPath = $gameDomainProto . '/wiki/';
+$forumDomain = 'forum.' . $gameDomain;
+$contactEmail = 'contact@' . $gameDomain;
 
 $version = '0.8';
 $versionStatus = ' BETA';

@@ -2,26 +2,23 @@
 
 class PDO_DB {
 
-    public $dbh; 
-    private static $dsn1  = 'mysql:unix_socket=';
-    private static $dsn2  = ';port=3306;dbname=game';
-    private static $user = 'he'; 
-    private static $pass = 'REDCATED'; 
+    public $dbh;
+    private static $instance = null;
+    private static $dsn  = 'mysql:unix_socket=/run/mysqld/mysqld.sock;dbname=game;charset=utf8mb4';
+    private static $user = 'he';
+    private static $pass = 'helegacy2024';
     private static $dbOptions = array(
-        //PDO::ATTR_PERSISTENT => true,
         PDO::ATTR_CASE => PDO::CASE_LOWER,
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION //TODO: remove this line on production (maybe not, just hide php errors, so I can see logs)
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
     );
 
-    public static function factory() { 
-        
-        //$sock = '/var/run/mysql/mysql.sock'; //localhost
-        $sock = '/var/lib/mysql/mysql.sock';
-            
-        if(!isset(self::$dbh)){
-            $dbh = new PDO(self::$dsn1.$sock.self::$dsn2,self::$user,self::$pass, self::$dbOptions); 
+    public static function factory() {
+        if(self::$instance === null){
+            self::$instance = new PDO(self::$dsn, self::$user, self::$pass, self::$dbOptions);
+            // Disable strict mode for compatibility with legacy schema (no default values on many columns)
+            self::$instance->exec("SET sql_mode = ''");
         }
-        return $dbh;
+        return self::$instance;
     }
     
 }

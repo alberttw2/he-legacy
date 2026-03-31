@@ -1,10 +1,10 @@
 <?php
 
 require 'config.php';
-require '/var/www/classes/Session.class.php';
-require '/var/www/classes/Player.class.php';
-require '/var/www/classes/Internet.class.php';
-require '/var/www/classes/System.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/Player.class.php';
+require BASE_PATH . 'classes/Internet.class.php';
+require BASE_PATH . 'classes/System.class.php';
 
 $session = new Session();
 $system = new System();
@@ -15,11 +15,7 @@ $player = new Player($_SESSION['id']);
 $internet = new Internet();
 $ranking = new Ranking();
 
-if(!$ranking->cert_have(2)){
-    $session->addMsg(sprintf(_("You need the certification %s to enable this page."), '<strong>'._('Hacking 101').'</strong>'), 'error');
-    header("Location:university?opt=certification");
-    exit();
-}
+// Cert check removed — Internet accessible to all players
 
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST)){
 
@@ -48,7 +44,6 @@ if($system->issetGet('ip')){
         $internet->navigate($_SESSION['CUR_IP']);
 
     } else {
-
 
         $internet->navigate($internet->home_getIP());
 

@@ -1,9 +1,9 @@
 <?php
-require '/var/www/classes/Session.class.php';
 require 'config.php';
-require '/var/www/classes/Social.class.php';
-require '/var/www/classes/System.class.php';
-require_once '/var/www/classes/Player.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/Social.class.php';
+require BASE_PATH . 'classes/System.class.php';
+require_once BASE_PATH . 'classes/Player.class.php';
 
 $session = new Session();
 $system = new System();
@@ -274,13 +274,12 @@ if($profileInfo['VALID_ID'] == 1){
                                             
                                             $social->friend_add($requestInfo['GET_VALUE'], $friendInfo['GET_VALUE']);
                                                                                         
-                                            require '/var/www/classes/Python.class.php';
-                                            $python = new Python();
-                                            
-                                            $python->generateProfile($friendInfo['GET_VALUE']);
-                                            $python->generateProfile($friendInfo['GET_VALUE'], 'br');
-                                            $python->generateProfile($_SESSION['id']);
-                                            $python->generateProfile($_SESSION['id'], 'br');
+                                            require_once BASE_PATH . 'classes/ProfileGenerator.class.php';
+                                            $profGen = new ProfileGenerator();
+                                            $profGen->generate($friendInfo['GET_VALUE'], 'en');
+                                            $profGen->generate($friendInfo['GET_VALUE'], 'br');
+                                            $profGen->generate($_SESSION['id'], 'en');
+                                            $profGen->generate($_SESSION['id'], 'br');
                                             
                                             $session->addMsg('Yey! You two are now friends :)', 'notice');
                                             header("Location:profile");

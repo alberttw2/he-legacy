@@ -28,11 +28,11 @@ class LRSys {
         $this->session = new Session();
 
 
-        require '/var/www/classes/Player.class.php';
-        require '/var/www/classes/PC.class.php';
-        require '/var/www/classes/Ranking.class.php';
-        require '/var/www/classes/Storyline.class.php';
-        require '/var/www/classes/Clan.class.php';
+        require BASE_PATH . 'classes/Player.class.php';
+        require BASE_PATH . 'classes/PC.class.php';
+        require BASE_PATH . 'classes/Ranking.class.php';
+        require BASE_PATH . 'classes/Storyline.class.php';
+        require BASE_PATH . 'classes/Clan.class.php';
 
         $this->log = new LogVPC();
         $this->ranking = new Ranking();
@@ -76,13 +76,12 @@ class LRSys {
 
             $gameIP = $gameIP1 . '.' . $gameIP2 . '.' . $gameIP3 . '.' . $gameIP4;
 
-            require '/var/www/classes/Forum.class.php';
+            require BASE_PATH . 'classes/Forum.class.php';
             $forum = new Forum();
 
-            require '/var/www/classes/Python.class.php';
-            
-            $python = new Python();
-            $python->createUser($this->user, $hash, $this->email, $gameIP);
+            require_once BASE_PATH . 'classes/UserCreator.class.php';
+            $creator = new UserCreator();
+            $creator->create($this->user, $hash, $this->email, $gameIP);
 
             $sql = 'SELECT COUNT(*) AS total, id FROM users WHERE login = :user LIMIT 1';
             $stmt = $this->pdo->prepare($sql);
@@ -94,7 +93,7 @@ class LRSys {
                 return FALSE;
             }
 
-            require '/var/www/classes/EmailVerification.class.php';
+            require BASE_PATH . 'classes/EmailVerification.class.php';
             $EmailVerification = new EmailVerification();
             
             if(!$EmailVerification->sendMail($regInfo->id, $this->email, $this->user)){
@@ -103,7 +102,7 @@ class LRSys {
                 //TODO: report to admin
             }
             
-            require '/var/www/classes/Finances.class.php';
+            require BASE_PATH . 'classes/Finances.class.php';
             $finances = new Finances();
             
             $finances->createAccount($regInfo->id);
@@ -158,21 +157,21 @@ class LRSys {
         $sqlLog = $this->pdo->prepare($sqlQuery);
         $sqlLog->execute(array($this->user, $this->email));
 
-        if ($sqlLog->rowCount() == '1') {
+        if ($sqlLog->rowCount() === 1) {
 
             $dados = $sqlLog->fetch();
 
-            if ($dados['email'] == $this->email) {
+            if ($dados['email'] === $this->email) {
                 $this->session->addMsg('This email is already used.', 'error');
             } else {
                 $this->session->addMsg('This username is already taken.', 'error');
             }
-            
+
             return FALSE;
-            
+
             // 2019: what could possibly go wrong?
-            //ainda falta verificar se email tá ok, se tem algum caracter especial, sql inject etc etc, mas fica pra depois                       
-        } elseif (strlen($this->user) == '0' || strlen($this->pass) == '0' || strlen($this->email) == '0') {
+            //ainda falta verificar se email tá ok, se tem algum caracter especial, sql inject etc etc, mas fica pra depois
+        } elseif (strlen($this->user) === 0 || strlen($this->pass) === 0 || strlen($this->email) === 0) {
 
             $this->session->addMsg('Some fields are empty.', 'error');
             
@@ -212,7 +211,7 @@ class LRSys {
             $this->session = new Session();
         }
         
-        require_once '/var/www/classes/Mission.class.php';        
+        require_once BASE_PATH . 'classes/Mission.class.php';        
         
         $this->mission = new Mission();
 
@@ -233,7 +232,7 @@ class LRSys {
             $sqlLog = $this->pdo->prepare($sqlQuery);
             $sqlLog->execute(array($this->user));
             
-            if ($sqlLog->rowCount() == '1') {
+            if ($sqlLog->rowCount() === 1) {
 
                 $dados = $sqlLog->fetchAll();
                    
@@ -273,7 +272,7 @@ class LRSys {
                         $premium = 0;
                     }
 
-                    require '/var/www/classes/Forum.class.php';
+                    require BASE_PATH . 'classes/Forum.class.php';
                     $forum = new Forum();
 
                     $forum->login($this->user, $this->pass, TRUE);
@@ -330,8 +329,8 @@ class LRSys {
             $this->pdo->query($sql);
         }
         
-        require_once '/var/www/classes/RememberMe.class.php';
-        $key = pack("H*", 'REDACTED');
+        require_once BASE_PATH . 'classes/RememberMe.class.php';
+        $key = pack("H*", '0119f6622019e762340d24715beffc525623dc2406ff4930891b8308ef7f3446');
         $rememberMe = new RememberMe($key, $this->pdo);
         $rememberMe->remember($id, false, $this->keepalive);
                 
@@ -351,7 +350,7 @@ class LRSys {
             return TRUE;
         }
         
-        if (strlen($this->user) == '0' || strlen($this->pass) == '0') {
+        if (strlen($this->user) === 0 || strlen($this->pass) === 0) {
 
             $this->session->addMsg('Some fields are empty.', 'error');
             return FALSE;

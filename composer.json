@@ -1,0 +1,13 @@
+{
+    "name": "hackerexperience/legacy",
+    "description": "Hacker Experience Legacy - Browser-based hacking simulation game",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "ezyang/htmlpurifier": "^4.17",
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "classmap": ["classes/"]
+    }
+}

@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 
 // 2019: TODO: What if there's a tie?
 //TODO: e se empatar?
@@ -6,7 +7,7 @@
 
 $start = microtime(true);
 
-require '/var/www/classes/PDO.class.php';
+require_once BASE_PATH . 'classes/PDO.class.php';
 
 $pdo = PDO_DB::factory();
 
@@ -109,14 +110,18 @@ if($total > 0){
                 $mostInfluentID = $ddoserArr[$k]['userID'];
             }
                       
-            $sql = "SELECT bankAcc FROM bankAccounts WHERE bankUser = '".$ddoserArr[$k]['userID']."' ORDER BY cash ASC LIMIT 1";
-            $bankacc = $pdo->query($sql)->fetch(PDO::FETCH_OBJ)->bankacc;
-            
-            $sql = "UPDATE bankAccounts SET cash = cash + '".$earned."' WHERE bankAcc = '".$bankacc."'";
-            $pdo->query($sql);
-            
-            $sql = "UPDATE users_stats SET moneyEarned = moneyEarned + '".$earned."' WHERE uid = '".$ddoserArr[$k]['userID']."'";
-            $pdo->query($sql);
+            $sql = "SELECT bankAcc FROM bankAccounts WHERE bankUser = :uid ORDER BY cash ASC LIMIT 1";
+            $stmtBank = $pdo->prepare($sql);
+            $stmtBank->execute(array(':uid' => $ddoserArr[$k]['userID']));
+            $bankacc = $stmtBank->fetch(PDO::FETCH_OBJ)->bankacc;
+
+            $sql = "UPDATE bankAccounts SET cash = cash + :earned WHERE bankAcc = :bankAcc";
+            $stmtCash = $pdo->prepare($sql);
+            $stmtCash->execute(array(':earned' => $earned, ':bankAcc' => $bankacc));
+
+            $sql = "UPDATE users_stats SET moneyEarned = moneyEarned + :earned WHERE uid = :uid";
+            $stmtStats = $pdo->prepare($sql);
+            $stmtStats->execute(array(':earned' => $earned, ':uid' => $ddoserArr[$k]['userID']));
             
             $split++;
 
@@ -130,32 +135,38 @@ if($total > 0){
         $sql = "UPDATE clan
                 INNER JOIN clan_stats
                 ON clan.clanID = clan_stats.cid
-                SET clan_stats.won = clan_stats.won + 1, clan.power = clan.power + '". $totalPower ."'
-                WHERE clan.clanID = '".$winnerID."'
-                ";
-        $pdo->query($sql);
+                SET clan_stats.won = clan_stats.won + 1, clan.power = clan.power + :totalPower
+                WHERE clan.clanID = :winnerID";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':totalPower' => $totalPower, ':winnerID' => $winnerID));
         
-        $sql = "UPDATE clan_stats SET lost = lost + 1 WHERE cid = '".$loserID."'";
-        $pdo->query($sql);
+        $sql = "UPDATE clan_stats SET lost = lost + 1 WHERE cid = :loserID";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':loserID' => $loserID));
         
-        $sql = "DELETE FROM clan_war WHERE (clanID1 = '".$winnerID."' and clanID2 = '".$loserID."') OR (clanID2 = '".$winnerID."' and clanID1 = '".$loserID."')";
-        $pdo->query($sql);
+        $sql = "DELETE FROM clan_war WHERE (clanID1 = :w1 and clanID2 = :l1) OR (clanID2 = :w2 and clanID1 = :l2)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':w1' => $winnerID, ':l1' => $loserID, ':w2' => $winnerID, ':l2' => $loserID));
         
         $sql = "INSERT INTO clan_war_history (id, idWinner, idLoser, scoreWinner, scoreLoser, startDate, endDate, bounty)
-                VALUES ('', '".$winnerID."', '".$loserID."', '".$winnerScore."', '".$loserScore."', '".$startDate."', NOW(), '".$bounty."')";
-        $pdo->query($sql);
+                VALUES ('', :winnerID, :loserID, :winnerScore, :loserScore, :startDate, NOW(), :bounty)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':winnerID' => $winnerID, ':loserID' => $loserID, ':winnerScore' => $winnerScore, ':loserScore' => $loserScore, ':startDate' => $startDate, ':bounty' => $bounty));
         $warID = $pdo->lastInsertId();
         
-        $sql = "SELECT attackerClan, victimClan, ddosID FROM clan_ddos WHERE (attackerClan = '".$winnerID."' AND victimClan = '".$loserID."') OR (attackerClan = '".$loserID."' AND victimClan = '".$winnerID."')";
-        $data2 = $pdo->query($sql)->fetchAll();
+        $sql = "SELECT attackerClan, victimClan, ddosID FROM clan_ddos WHERE (attackerClan = :w1 AND victimClan = :l1) OR (attackerClan = :l2 AND victimClan = :w2)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':w1' => $winnerID, ':l1' => $loserID, ':l2' => $loserID, ':w2' => $winnerID));
+        $data2 = $stmt->fetchAll();
         
         if(sizeof($data2) > 0){
             
             for($j=0; $j<sizeof($data2); $j++){
                 
-                $sql = "INSERT INTO clan_ddos_history (attackerClan, victimClan, ddosID, warID) 
-                        VALUES ('".$data2[$j]['attackerclan']."', '".$data2[$j]['victimclan']."', '".$data2[$j]['ddosid']."', '".$warID."')";
-                $pdo->query($sql);
+                $sql = "INSERT INTO clan_ddos_history (attackerClan, victimClan, ddosID, warID)
+                        VALUES (:attClan, :vicClan, :ddosID, :warID)";
+                $stmtHist = $pdo->prepare($sql);
+                $stmtHist->execute(array(':attClan' => $data2[$j]['attackerclan'], ':vicClan' => $data2[$j]['victimclan'], ':ddosID' => $data2[$j]['ddosid'], ':warID' => $warID));
                 
             }
             
@@ -164,8 +175,10 @@ if($total > 0){
         // 2019: "Social" updates notifying the end of the war
         //ATUALIZAÇÕES "SOCIAIS" AVISANDO O FIM DA GUERRA \/
         
-        $sql = "SELECT login FROM users WHERE id = '".$mostInfluentID."' LIMIT 1";
-        $playerName = $pdo->query($sql)->fetch(PDO::FETCH_OBJ)->login;
+        $sql = "SELECT login FROM users WHERE id = :uid LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':uid' => $mostInfluentID));
+        $playerName = $stmt->fetch(PDO::FETCH_OBJ)->login;
         
         $title = $winnerName.' won clan battle against '.$loserName;
         
@@ -182,9 +195,10 @@ if($total > 0){
         
         $newsID = $pdo->lastInsertId();
         
-        $sql = "INSERT INTO news_history (newsID, info1, info2) 
-                VALUES ('".$newsID."', '".$winnerID."', '".$bounty."')";
-        $pdo->query($sql);
+        $sql = "INSERT INTO news_history (newsID, info1, info2)
+                VALUES (:newsID, :winnerID, :bounty)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':newsID' => $newsID, ':winnerID' => $winnerID, ':bounty' => $bounty));
         
         $sql = "SELECT r.attID, clan_users.clanID, users.login
                 FROM round_ddos r
@@ -194,10 +208,12 @@ if($total > 0){
                 ON r.attID = clan_users.userID
                 INNER JOIN users
                 ON users.id = r.attID
-                WHERE 
-                    (d.attackerClan = '".$winnerID."' AND d.victimClan = '".$loserID."') OR 
-                    (d.attackerClan = '".$loserID."' AND d.victimClan = '".$winnerID."')";
-        $usersInvolved = $pdo->query($sql)->fetchAll();
+                WHERE
+                    (d.attackerClan = :w1 AND d.victimClan = :l1) OR
+                    (d.attackerClan = :l2 AND d.victimClan = :w2)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':w1' => $winnerID, ':l1' => $loserID, ':l2' => $loserID, ':w2' => $winnerID));
+        $usersInvolved = $stmt->fetchAll();
         
         $from = -5;
         $type = 1;
@@ -230,17 +246,20 @@ if($total > 0){
                 $sqlMail = $pdo->prepare($sql);
                 $sqlMail->execute(array($from, $to, $type, $subject, $text));
                 
-                exec('/usr/bin/env python /var/www/python/badge_add.py user '.$to.' 60');
+                require_once BASE_PATH . 'classes/BadgeManager.class.php';
+                BadgeManager::award('user', $to, 60);
                 
             }
             
         }
         
-        $sql = "DELETE FROM clan_ddos WHERE (attackerClan = '".$winnerID."' AND victimClan = '".$loserID."') OR (attackerClan = '".$loserID."' AND victimClan = '".$winnerID."')";
-        $pdo->query($sql);
+        $sql = "DELETE FROM clan_ddos WHERE (attackerClan = :w1 AND victimClan = :l1) OR (attackerClan = :l2 AND victimClan = :w2)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':w1' => $winnerID, ':l1' => $loserID, ':l2' => $loserID, ':w2' => $winnerID));
         
-        exec('/usr/bin/env python /var/www/python/badge_add.py user '.$mostInfluentID.' 61');
-        exec('/usr/bin/env python /var/www/python/badge_add.py user '.$mostInfluentID.' 71');
+        require_once BASE_PATH . 'classes/BadgeManager.class.php';
+        BadgeManager::award('user', $mostInfluentID, 61);
+        BadgeManager::award('user', $mostInfluentID, 71);
         
     }
     

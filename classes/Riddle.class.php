@@ -57,8 +57,10 @@ class Riddle {
         }
         
         $this->session->newQuery();
-        $sql = "SELECT npc_key.key FROM npc_key WHERE npcID = '".$this->npcID."' LIMIT 1";
-        $key = $this->pdo->query($sql)->fetch(PDO::FETCH_OBJ)->key;
+        $sql = "SELECT npc_key.key FROM npc_key WHERE npcID = :npcID LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':npcID' => $this->npcID));
+        $key = $stmt->fetch(PDO::FETCH_OBJ)->key;
                 
         list($type, $puzzleID) = explode('/', $key);
         
@@ -237,7 +239,7 @@ class Riddle {
         }
         
         if(!$system->validate($answer, 'qa-answer')){
-            $returnText .= '<div class="alert alert-error">'._('Invalid characteres on your answer ').'\'<strong>'.$answer.'</strong>\'. '._('Please use only azAZ09 ,.').'</div>';
+            $returnText .= '<div class="alert alert-error">'._('Invalid characteres on your answer ').'\'<strong>'.htmlspecialchars($answer, ENT_QUOTES, 'UTF-8').'</strong>\'. '._('Please use only azAZ09 ,.').'</div>';
             return $returnText;
         }
         
@@ -439,12 +441,13 @@ if($this->puzzleInfo->credit){
     }
     
     public function getFirstRiddle(){
-        
-        $key = 'PUZZLE/1';
+
         $this->session->newQuery();
-        $sql = "SELECT npc.npcIP FROM npc INNER JOIN npc_key ON npc.id = npc_key.npcID WHERE npc_key.key = '".$key."' LIMIT 1";
-        return long2ip($this->pdo->query($sql)->fetch(PDO::FETCH_OBJ)->npcip);
-        
+        $sql = "SELECT npc.npcIP FROM npc INNER JOIN npc_key ON npc.id = npc_key.npcID WHERE npc_key.key = :key LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':key' => 'PUZZLE/1']);
+        return long2ip($stmt->fetch(PDO::FETCH_OBJ)->npcip);
+
     }
     
     public function getNextIP($npcIP = ''){
@@ -454,7 +457,7 @@ if($this->puzzleInfo->credit){
         }
         
         if(!isset($this->puzzleID)){
-            require_once '/var/www/classes/Player.class.php';
+            require_once BASE_PATH . 'classes/Player.class.php';
             $player = new Player();
 
             $npcInfo = $player->getIDByIP($npcIP, 'NPC');
@@ -488,8 +491,10 @@ if($this->puzzleInfo->credit){
         }
         
         $this->session->newQuery();
-        $sql = "SELECT npc.npcIP FROM npc INNER JOIN npc_key ON npc.id = npc_key.npcID WHERE npc_key.key = '".$nextKey."' LIMIT 1";
-        $this->nextIP = $this->pdo->query($sql)->fetch(PDO::FETCH_OBJ)->npcip;
+        $sql = "SELECT npc.npcIP FROM npc INNER JOIN npc_key ON npc.id = npc_key.npcID WHERE npc_key.key = :nextKey LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':nextKey' => $nextKey));
+        $this->nextIP = $stmt->fetch(PDO::FETCH_OBJ)->npcip;
         
         return $this->nextIP;
         
@@ -497,15 +502,17 @@ if($this->puzzleInfo->credit){
     
     public function alreadySolvedRiddle($npcIP){
         
-        require_once '/var/www/classes/Player.class.php';
+        require_once BASE_PATH . 'classes/Player.class.php';
         $player = new Player();
         
         $npcInfo = $player->getIDByIP($npcIP, 'NPC');
         $puzzleID = self::npcPuzzleID($npcInfo['0']['id']);
 
         $this->session->newQuery();
-        $sql = "SELECT COUNT(*) AS total FROM puzzle_solved WHERE userID = '".$_SESSION['id']."' AND puzzleID = '".$puzzleID."' LIMIT 1";
-        if($this->pdo->query($sql)->fetch(PDO::FETCH_OBJ)->total == 0){
+        $sql = "SELECT COUNT(*) AS total FROM puzzle_solved WHERE userID = :uid AND puzzleID = :puzzleID LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':uid' => $_SESSION['id'], ':puzzleID' => $puzzleID));
+        if($stmt->fetch(PDO::FETCH_OBJ)->total == 0){
             $this->solved = FALSE;
             return FALSE;
         } else {
@@ -526,8 +533,9 @@ if($this->puzzleInfo->credit){
         }
         
         $this->session->newQuery();
-        $sql = "INSERT INTO puzzle_solved (puzzleID, userID) VALUES ('".$this->puzzleID."', '".$_SESSION['id']."')";
-        $this->pdo->query($sql);
+        $sql = "INSERT INTO puzzle_solved (puzzleID, userID) VALUES (:puzzleID, :uid)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':puzzleID' => $this->puzzleID, ':uid' => $_SESSION['id']));
         
         if(self::cmpPuzzleID($this->puzzleID) > self::cmpPuzzleID(self::getLatestSolved())){
         
@@ -726,7 +734,7 @@ if($this->puzzleInfo->credit){
                 $create = TRUE;
             }
             
-            require_once '/var/www/classes/System.class.php';
+            require_once BASE_PATH . 'classes/System.class.php';
             $system = new System();
             
             if(!$system->validate($_COOKIE['PUZZLE_HINT']['IP'], 'hintip')){

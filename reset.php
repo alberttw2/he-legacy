@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/config.php";
 
 ini_set('display_errors', 'on');
 
@@ -12,6 +13,10 @@ if(isset($_SESSION['id'])){
 $msg = '';
 
 if(isset($_POST['email'])){
+
+	if (!CSRF::verify()) {
+		exit('Invalid request. Please try again.');
+	}
 
 	require 'classes/System.class.php';
 
@@ -39,7 +44,7 @@ if(isset($_POST['email'])){
 	$stmt = $pdo->prepare($sql);
 	$stmt->execute(Array(':uid' => $userInfo->id, ':code' => $code));    
 
-    require '/var/www/classes/SES.class.php';            
+    require BASE_PATH . 'classes/SES.class.php';            
     $ses = new SES();
     $ses->send('request_reset', Array('to' => $email, 'user' => $userInfo->login, 'code' => $code));
 
@@ -51,6 +56,10 @@ if(isset($_POST['email'])){
 	exit();
 
 }  elseif(isset($_POST['code'])){
+
+	if (!CSRF::verify()) {
+		exit('Invalid request. Please try again.');
+	}
 
 	$pdo = PDO_DB::factory();
 
@@ -116,14 +125,16 @@ if(isset($_POST['email'])){
 ?>
 	
 	<form action="" method="POST">
-		<input type="hidden" name="code" value="<?php echo $_GET['code']; ?>">
+		<?php echo CSRF::field(); ?>
+		<input type="hidden" name="code" value="<?php echo htmlspecialchars($_GET['code'], ENT_QUOTES, 'UTF-8'); ?>">
 		Password: <input type="password" name="pwd"> (6 or more characters)<br/>
 		Repeat plz: <input type="password" name="pwd2"><br/>
 		<input type="submit" value="Change password">
 
 	</form>
 
-<?php	
+<?php
+require_once __DIR__ . "/config.php";	
 
 	exit();
 
@@ -136,9 +147,11 @@ if(isset($_POST['email'])){
 </head>
 <body>
 
-<?php if($msg != ''){ echo $msg.'<br/><br/>'; } ?>
+<?php
+require_once __DIR__ . "/config.php"; if($msg != ''){ echo $msg.'<br/><br/>'; } ?>
 
 	<form action="reset" method="POST">
+		<?php echo CSRF::field(); ?>
 		<input type="text" name="email" placeholder="Please insert your email"><br/><br/>
 		<input type="submit" value="Request password reset">
 	</form>

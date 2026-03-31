@@ -1,10 +1,10 @@
 <?php
 
 require 'config.php';
-require '/var/www/classes/Session.class.php';
-require '/var/www/classes/Player.class.php';
-require '/var/www/classes/System.class.php';
-require '/var/www/classes/Ranking.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/Player.class.php';
+require BASE_PATH . 'classes/System.class.php';
+require BASE_PATH . 'classes/Ranking.class.php';
 
 $session = new Session();
 

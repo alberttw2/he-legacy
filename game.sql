@@ -1965,6 +1965,7 @@ CREATE TABLE `processes` (
   `pLocal` tinyint(1) NOT NULL,
   `pNPC` tinyint(1) NOT NULL,
   `isPaused` tinyint(1) NOT NULL,
+  `priority` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`pid`),
   KEY `pCreatorID` (`pCreatorID`),
   KEY `pNPC` (`pNPC`),

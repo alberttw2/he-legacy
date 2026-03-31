@@ -13,7 +13,7 @@
 <?php echo _('Introduce yourself there. It\'s always great to make internet friends :)'); ?>
 <br/>
 <br/>
-<?php echo _('If you prefer, you can mail us at'); ?> <code><?php echo _('contact@hackerexperience.com'); ?></code>.<br/>
+<?php echo _('If you prefer, you can mail us at'); ?> <code><?php echo $GLOBALS['contactEmail']; ?></code>.<br/>
 <?php echo _('We will be thrilled to reply you as soon as possible.'); ?>
 <br/>
         </div>
@@ -27,11 +27,11 @@
                 </div>
                 <div class="widget-content center">
                     <strong>Wiki</strong><br/>
-                    <a href="https://wiki.hackerexperience.com">https://wiki.hackerexperience.com/</a>
+                    <a href="<?php echo $GLOBALS['wikiPath']; ?>"><?php echo $GLOBALS['wikiPath']; ?></a>
                     <br/>
                     <br/>
                     <strong><?php echo _('Forum'); ?></strong><br/>
-                    <a href="https://forum.hackerexperience.com">https://forum.hackerexperience.com/</a>
+                    <a href="https://<?php echo $GLOBALS['forumDomain']; ?>/">https://<?php echo $GLOBALS['forumDomain']; ?>/</a>
                 </div>
             </div>
         </div>

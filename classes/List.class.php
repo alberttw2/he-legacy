@@ -13,11 +13,11 @@ class Lists {
 
     function __construct(){
 
-        require_once '/var/www/classes/Player.class.php';
-        require_once '/var/www/classes/Pagination.class.php';
-        require_once '/var/www/classes/PC.class.php';
-        require_once '/var/www/classes/Process.class.php';
-        require_once '/var/www/classes/Finances.class.php';
+        require_once BASE_PATH . 'classes/Player.class.php';
+        require_once BASE_PATH . 'classes/Pagination.class.php';
+        require_once BASE_PATH . 'classes/PC.class.php';
+        require_once BASE_PATH . 'classes/Process.class.php';
+        require_once BASE_PATH . 'classes/Finances.class.php';
 
         $this->pdo = PDO_DB::factory();
         $this->player = new Player();
@@ -803,7 +803,7 @@ class Lists {
                                 self::setLastCollect($virusInfo->virusid);
 
                             } else {
-                                $text4 = ' <a href="https://wiki.hackerexperience.com/'._('en').':hacked_database'._('#collecting_money').'">(?)</a>';
+                                $text4 = ' <a href="'.$GLOBALS['wikiPath']._('en').':hacked_database'._('#collecting_money').'">(?)</a>';
                                 
                                 $sent = 0;
                                 $moneyGenerated = $formatedValue = 0;

@@ -1,6 +1,7 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 
-require_once '/var/www/classes/PDO.class.php';
+require_once BASE_PATH . 'classes/PDO.class.php';
 
 $pdo = PDO_DB::factory();
 
@@ -20,8 +21,9 @@ if(sizeof($data2) > 0){
             
             if($data2[$i]['timeleft'] < 0){ //FINISH ROUND
                 
-                $sql = "UPDATE virus_doom SET status = 3 WHERE doomID = '".$data2[$i]['doomid']."'";
-                $pdo->query($sql);
+                $sql = "UPDATE virus_doom SET status = 3 WHERE doomID = :doomID";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(array(':doomID' => $data2[$i]['doomid']));
                 
                 require 'finishRound.php';
                 

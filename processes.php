@@ -1,10 +1,10 @@
 <?php
 
 require 'config.php';
-require '/var/www/classes/System.class.php';
-require '/var/www/classes/Session.class.php';
-require '/var/www/classes/Player.class.php';
-require '/var/www/classes/Process.class.php';
+require BASE_PATH . 'classes/System.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/Player.class.php';
+require BASE_PATH . 'classes/Process.class.php';
 
 $session = new Session();
 $system = new System();
@@ -143,7 +143,7 @@ if($gotGet == '1'){
 
     if($system->issetGet('action')){
 
-        $actionInfo = $system->switchGet('action', 'pause', 'resume');
+        $actionInfo = $system->switchGet('action', 'pause', 'resume', 'priority');
 
         if($actionInfo['ISSET_GET'] == 1){
 
@@ -172,13 +172,24 @@ if($gotGet == '1'){
                         $process->resumeProcess($getInfo['GET_VALUE']);
 
                         $session->addMsg(_('Process resumed.'), 'notice');
-                        
+
                         header("Location:processes.php");
                         exit();
 
                     } else {
                         $system->handleError('PROC_NOT_PAUSED', 'processes.php');
                     }
+
+                    break;
+
+                case 'priority':
+
+                    $process->togglePriority($getInfo['GET_VALUE']);
+
+                    $session->addMsg(_('Process priority updated.'), 'notice');
+
+                    header("Location:processes.php");
+                    exit();
 
                     break;
 

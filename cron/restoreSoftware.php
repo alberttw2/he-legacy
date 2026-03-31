@@ -1,8 +1,9 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 
 //function: restore npc software according to originalsoftware table on mysql
 
-require '/var/www/classes/PDO.class.php';
+require_once BASE_PATH . 'classes/PDO.class.php';
 
 $pdo = PDO_DB::factory();
 
@@ -13,8 +14,10 @@ $query = $pdo->query($sql);
 
 while($row = $query->fetch(PDO::FETCH_OBJ)){
  
-    $newSql = "SELECT id FROM software WHERE userID = $row->npcid AND isNPC = 1 AND softName = '".$row->softname."' AND softVersion = $row->softversion";
-    $newQuery = $pdo->query($newSql)->fetchAll();
+    $newSql = "SELECT id FROM software WHERE userID = :npcid AND isNPC = 1 AND softName = :softname AND softVersion = :softversion";
+    $stmtCheck = $pdo->prepare($newSql);
+    $stmtCheck->execute(array(':npcid' => $row->npcid, ':softname' => $row->softname, ':softversion' => $row->softversion));
+    $newQuery = $stmtCheck->fetchAll();
 
     if(count($newQuery) == 0){
 

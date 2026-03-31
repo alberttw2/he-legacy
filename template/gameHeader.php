@@ -17,7 +17,7 @@ if(isset($_SESSION['id'])){
         exit('Invalid session id.');
     }
     
-    require_once '/var/www/classes/Ranking.class.php';
+    require_once BASE_PATH . 'classes/Ranking.class.php';
     
     $ranking = new Ranking();
     $session = new Session();
@@ -25,10 +25,13 @@ if(isset($_SESSION['id'])){
     $pdo = PDO_DB::factory();
     
     $session->newQuery();
-    $sql = "SELECT lang FROM users_language WHERE userID = '".$_SESSION['id']."' LIMIT 1";
-    $lang = $pdo->query($sql)->fetch(PDO::FETCH_OBJ)->lang;    
+    $sql = "SELECT lang FROM users_language WHERE userID = :uid LIMIT 1";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(array(':uid' => $_SESSION['id']));
+    $langResult = $stmt->fetch(PDO::FETCH_OBJ);
+    $lang = $langResult ? $langResult->lang : 'en';
     
-//    require '/var/www/classes/EmailVerification.class.php';
+//    require BASE_PATH . 'classes/EmailVerification.class.php';
 //    $emailVerification = new EmailVerification();
 //    
 //    if(!$emailVerification->isVerified($_SESSION['id'])){
@@ -40,7 +43,7 @@ if(isset($_SESSION['id'])){
 //        header("Location:welcome");
 //    }
 
-    if($_SESSION['ROUND_STATUS'] != 1){
+    if(($_SESSION['ROUND_STATUS'] ?? 0) != 1){
         
         $redirect = TRUE;
         
@@ -81,6 +84,9 @@ if(isset($_SESSION['id'])){
 
     $curDate = new DateTime('now');
     $curDate->modify('-5 minutes');
+    if(!isset($_SESSION['LAST_CHECK'])){
+        $_SESSION['LAST_CHECK'] = new DateTime('now');
+    }
     $checkDiff = $curDate->diff($_SESSION['LAST_CHECK']);
     
     if($checkDiff->invert == 1){

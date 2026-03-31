@@ -1,8 +1,9 @@
 <?php
+require_once __DIR__ . "/config.php";
 
-require '/var/www/classes/Session.class.php';
-require '/var/www/classes/Ranking.class.php';
-require '/var/www/classes/Forum.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/Ranking.class.php';
+require BASE_PATH . 'classes/Forum.class.php';
 
 $session  = new Session();
 $ranking = new Ranking();
@@ -19,7 +20,7 @@ $session->logout();
 
 if($session->issetFBLogin()){
     
-    require_once '/var/www/classes/Facebook.class.php';
+    require_once BASE_PATH . 'classes/Facebook.class.php';
 
     $facebook = new Facebook(array(
         'appId' => 'REDACTED',

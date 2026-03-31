@@ -1,8 +1,9 @@
 <?php
-require '/var/www/classes/System.class.php';
-require '/var/www/classes/Session.class.php';
-require '/var/www/classes/Player.class.php';
-require '/var/www/classes/PC.class.php';
+require_once __DIR__ . "/config.php";
+require BASE_PATH . 'classes/System.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/Player.class.php';
+require BASE_PATH . 'classes/PC.class.php';
 
 $session = new Session();
 $system = new System();
@@ -48,6 +49,7 @@ if($system->issetGet('learn')){
 ?>
                     <div class="span12<?php echo $center; ?>">
 <?php
+require_once __DIR__ . "/config.php";
 
 if($session->issetMsg()){
     $session->returnMsg();
@@ -65,6 +67,7 @@ if($session->issetMsg()){
                             <div class="cert-complete"></div>
                             <div class="widget-content padding noborder">
 <?php
+require_once __DIR__ . "/config.php";
 
 if($system->issetGet('opt')){
 
@@ -181,7 +184,8 @@ if($system->issetGet('opt')){
                             </div>
                             <div style="clear: both;" class="nav nav-tabs">&nbsp;</div>
                                 
-<?php                                
+<?php
+require_once __DIR__ . "/config.php";                                
 
 require 'template/contentEnd.php';
 

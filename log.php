@@ -2,11 +2,11 @@
 
 
 require 'config.php';
-require_once '/var/www/classes/System.class.php';
-require '/var/www/classes/Session.class.php';
-require '/var/www/classes/Player.class.php';
-require '/var/www/classes/PC.class.php';
-require '/var/www/classes/Process.class.php';
+require_once BASE_PATH . 'classes/System.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/Player.class.php';
+require BASE_PATH . 'classes/PC.class.php';
+require BASE_PATH . 'classes/Process.class.php';
 
 $session = new Session();
 $system = new System();

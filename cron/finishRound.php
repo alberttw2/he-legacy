@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 
 // 2019: This script ends the round. It is also called from within the game.
 // 2019: Before removing the exit below, make sure to not allow anyone to externally (remotely) execute this script.
@@ -73,7 +74,7 @@ function getExtension($softType) {
 
  }
 
-require_once '/var/www/classes/PDO.class.php';
+require_once BASE_PATH . 'classes/PDO.class.php';
 $pdo = PDO_DB::factory();
 
 $start = microtime(true);
@@ -106,16 +107,18 @@ $sql = "SELECT
         LEFT JOIN clan
         ON clan.clanID = clan_users.clanID
         ORDER BY exp DESC";
-$data = $pdo->query($sql);
+$data = $pdo->query($sql)->fetchAll();
 
 $rank = 0;
 
-while($pInfo = $data->fetch(PDO::FETCH_OBJ)){
-    
+foreach($data as $_row){ $pInfo = (object)$_row;
+
     $rank++;
-    
-    $sql = "SELECT softName, softVersion, softType FROM software WHERE userID = '".$pInfo->uid."' AND isNPC = 0 AND softtype < 30 ORDER BY softVersion DESC LIMIT 1";
-    $softInfo = $pdo->query($sql)->fetchAll();
+
+    $sql = "SELECT softName, softVersion, softType FROM software WHERE userID = :uid AND isNPC = 0 AND softtype < 30 ORDER BY softVersion DESC LIMIT 1";
+    $stmtSoft = $pdo->prepare($sql);
+    $stmtSoft->execute(array(':uid' => $pInfo->uid));
+    $softInfo = $stmtSoft->fetchAll();
     
     if(sizeof($softInfo) == 1){
         
@@ -129,10 +132,19 @@ while($pInfo = $data->fetch(PDO::FETCH_OBJ)){
     $sql = "INSERT INTO hist_users 
                 (round, rank, id, userID, user, reputation, age, clanName, timePlaying, hackCount, ddosCount, bitcoinSent, ipResets, moneyEarned, 
                  moneyTransfered, moneyHardware, moneyResearch, bestSoft, bestSoftVersion, warezSent, spamSent, profileViews, researchCount) 
-            VALUES ('".$curRound."', '".$rank."', '', '".$pInfo->uid."', '".$pInfo->login."', '".$pInfo->exp."', '".$pInfo->age."','".$pInfo->name."', '".$pInfo->timeplaying."',
-                    '".$pInfo->hackcount."', '".$pInfo->ddoscount."', '".$pInfo->bitcoinsent."', '".$pInfo->ipresets."', '".$pInfo->moneyearned."', '".$pInfo->moneytransfered."', '".$pInfo->moneyhardware."', '".$pInfo->moneyresearch."',
-                    '".$softName."', '".$softVersion."', '".$pInfo->warezsent."', '".$pInfo->spamsent."', '".$pInfo->profileviews."', '".$pInfo->researchcount."')";
-    $pdo->query($sql);
+            VALUES (:curRound, :rank, '', :uid, :login, :exp, :age, :clanName, :timeplaying,
+                    :hackcount, :ddoscount, :bitcoinsent, :ipresets, :moneyearned, :moneytransfered, :moneyhardware, :moneyresearch,
+                    :softName, :softVersion, :warezsent, :spamsent, :profileviews, :researchcount)";
+    $stmtHist = $pdo->prepare($sql);
+    $stmtHist->execute(array(
+        ':curRound' => $curRound, ':rank' => $rank, ':uid' => $pInfo->uid, ':login' => $pInfo->login,
+        ':exp' => $pInfo->exp, ':age' => $pInfo->age, ':clanName' => $pInfo->name, ':timeplaying' => $pInfo->timeplaying,
+        ':hackcount' => $pInfo->hackcount, ':ddoscount' => $pInfo->ddoscount, ':bitcoinsent' => $pInfo->bitcoinsent,
+        ':ipresets' => $pInfo->ipresets, ':moneyearned' => $pInfo->moneyearned, ':moneytransfered' => $pInfo->moneytransfered,
+        ':moneyhardware' => $pInfo->moneyhardware, ':moneyresearch' => $pInfo->moneyresearch,
+        ':softName' => $softName, ':softVersion' => $softVersion, ':warezsent' => $pInfo->warezsent,
+        ':spamsent' => $pInfo->spamsent, ':profileviews' => $pInfo->profileviews, ':researchcount' => $pInfo->researchcount
+    ));
     
     if($rank <= 10){
         $best['user'][$rank] = $pInfo->uid;
@@ -154,11 +166,11 @@ $sql = "SELECT clan.clanID, clan.name, clan.nick, clan.power, clan_stats.won, cl
         FROM clan
         INNER JOIN clan_stats ON clan_stats.cid = clan.clanID
         ORDER BY clan.power DESC";
-$data = $pdo->query($sql);
+$data = $pdo->query($sql)->fetchAll();
 
 $rank = 0;
 
-while($cInfo = $data->fetch(PDO::FETCH_OBJ)){
+foreach($data as $_row){ $cInfo = (object)$_row;
     
     $rank++;
 
@@ -191,11 +203,11 @@ $sql = "SELECT softName, softType, softVersion, userID, users.login
         JOIN users ON users.id = software.userID 
         WHERE isNPC = 0 AND softtype < 30 AND softType <> 19 
         ORDER BY softVersion DESC, softSize ASC";
-$data = $pdo->query($sql);
+$data = $pdo->query($sql)->fetchAll();
 
 $rank = 0;
 
-while($sInfo = $data->fetch(PDO::FETCH_OBJ)){
+foreach($data as $_row){ $sInfo = (object)$_row;
 
     $rank++;
     
@@ -221,11 +233,11 @@ $sql = "SELECT ranking_ddos.rank, attID, vicID, power, servers, att.login AS att
         WHERE vicNPC = 0
         ORDER BY power DESC, servers DESC";
 
-$data = $pdo->query($sql);
+$data = $pdo->query($sql)->fetchAll();
 
 $rank = 0;
 
-while($dInfo = $data->fetch(PDO::FETCH_OBJ)){
+foreach($data as $_row){ $dInfo = (object)$_row;
 
     $rank++;
     
@@ -246,9 +258,9 @@ while($dInfo = $data->fetch(PDO::FETCH_OBJ)){
 $sql = "SELECT idWinner, idLoser, scoreWinner, scoreLoser, startDate, endDate, bounty
         FROM clan_war_history
         ORDER BY endDate ASC";
-$data = $pdo->query($sql);
+$data = $pdo->query($sql)->fetchAll();
 
-while($wInfo = $data->fetch(PDO::FETCH_OBJ)){
+foreach($data as $_row){ $wInfo = (object)$_row;
 
     $sql = "INSERT INTO hist_clans_war (id, idWinner, idLoser, scoreWinner, scoreLoser, startDate, endDate, bounty, round) 
             VALUES ('', '".$wInfo->idwinner."', '".$wInfo->idloser."', '".$wInfo->scorewinner."', '".$wInfo->scoreloser."', '".$wInfo->startdate."', '".$wInfo->enddate."', '".$wInfo->bounty."', '".$curRound."')";
@@ -283,10 +295,10 @@ $sql = "SELECT type, missionEnd, prize, userID, completed, npc.id AS hirerID
         FROM missions_history
         INNER JOIN npc ON npc.npcIP = hirer
         ORDER BY missionEnd ASC";
-$data = $pdo->query($sql);
+$data = $pdo->query($sql)->fetchAll();
 
-while($mInfo = $data->fetch(PDO::FETCH_OBJ)){
-    
+foreach($data as $_row){ $mInfo = (object)$_row;
+
     $sql = "INSERT INTO hist_missions (id, userID, type, hirerID, prize, missionEnd, completed, round) 
             VALUES ('', ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $pdo->prepare($sql);
@@ -300,10 +312,10 @@ while($mInfo = $data->fetch(PDO::FETCH_OBJ)){
 
 $sql = "SELECT creatorID, clanID, status
         FROM virus_doom";
-$data = $pdo->query($sql);
+$data = $pdo->query($sql)->fetchAll();
 
-while($dInfo = $data->fetch(PDO::FETCH_OBJ)){
-        
+foreach($data as $_row){ $dInfo = (object)$_row;
+
     if($dInfo->status == 3){
         $dommerID = $dInfo->creatorid;
     }
@@ -378,47 +390,50 @@ $pdo->query('DELETE FROM virus');
 $pdo->query('DELETE FROM virus_ddos');
 $pdo->query('DELETE FROM virus_doom');
 
-exec('/usr/bin/env python /var/www/python/fame_generator.py '.$curRound.' preview');
-exec('/usr/bin/env python /var/www/python/fame_generator.py '.$curRound);
-exec('/usr/bin/env python /var/www/python/fame_generator_alltime.py');
-exec('/usr/bin/env python /var/www/python/fame_generator_alltime.py preview');
+// Fame generators
+require_once BASE_PATH . 'cron/fameGenerator.php';
+require_once BASE_PATH . 'cron/fameGeneratorAlltime.php';
 
-//badges
+// Badges
+require_once BASE_PATH . 'classes/BadgeManager.class.php';
 
-//doomer badges
-exec('/usr/bin/env python /var/www/python/badge_add.py user '.$dommerID.' 14');
-exec('/usr/bin/env python /var/www/python/badge_add.py user '.$dommerID.' 71');
+// Doomer badges
+BadgeManager::award('user', $dommerID, 14);
+BadgeManager::award('user', $dommerID, 71);
 
-//bests
-exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['user'][1].' 7');
-exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['user'][2].' 8');
-exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['user'][3].' 9');
+// Bests - users
+BadgeManager::award('user', $best['user'][1], 7);
+BadgeManager::award('user', $best['user'][2], 8);
+BadgeManager::award('user', $best['user'][3], 9);
 
-exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['soft'][1].' 72');
-exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['soft'][2].' 73');
-exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['soft'][3].' 74');
+// Bests - software
+BadgeManager::award('user', $best['soft'][1], 72);
+BadgeManager::award('user', $best['soft'][2], 73);
+BadgeManager::award('user', $best['soft'][3], 74);
 
-exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['ddos'][1].' 76');
-exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['ddos'][2].' 77');
-exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['ddos'][3].' 78');
+// Bests - ddos
+BadgeManager::award('user', $best['ddos'][1], 76);
+BadgeManager::award('user', $best['ddos'][2], 77);
+BadgeManager::award('user', $best['ddos'][3], 78);
 
-exec('/usr/bin/env python /var/www/python/badge_add.py clan '.$best['clan'][1].' 81');
-exec('/usr/bin/env python /var/www/python/badge_add.py clan '.$best['clan'][2].' 82');
-exec('/usr/bin/env python /var/www/python/badge_add.py clan '.$best['clan'][3].' 83');
+// Bests - clans
+BadgeManager::award('clan', $best['clan'][1], 81);
+BadgeManager::award('clan', $best['clan'][2], 82);
+BadgeManager::award('clan', $best['clan'][3], 83);
 
-//almost there
+// Almost there (positions 4-10)
 for($i = 4; $i <= 10; $i++){
     if(array_key_exists($i, $best['user'])){
-        exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['user'][$i].' 10');
+        BadgeManager::award('user', $best['user'][$i], 10);
     }
     if(array_key_exists($i, $best['soft'])){
-        exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['soft'][$i].' 75');
+        BadgeManager::award('user', $best['soft'][$i], 75);
     }
     if(array_key_exists($i, $best['ddos'])){
-        exec('/usr/bin/env python /var/www/python/badge_add.py user '.$best['ddos'][$i].' 79');
+        BadgeManager::award('user', $best['ddos'][$i], 79);
     }
     if(array_key_exists($i, $best['clan'])){
-        exec('/usr/bin/env python /var/www/python/badge_add.py clan '.$best['clan'][$i].' 84');
+        BadgeManager::award('clan', $best['clan'][$i], 84);
     }
 }
 

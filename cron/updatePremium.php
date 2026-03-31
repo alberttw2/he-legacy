@@ -1,6 +1,7 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 
-require '/var/www/classes/PDO.class.php';
+require_once BASE_PATH . 'classes/PDO.class.php';
 
 $pdo = PDO_DB::factory();
 
@@ -14,11 +15,13 @@ if($totalExpired > 0){
     
     for($i=0;$i<sizeof($data);$i++){
         
-        $sql = 'UPDATE users SET premium = 0 WHERE id = '.$data[$i]['id'];
-        $pdo->query($sql);
-        
-        $sql = 'UPDATE profile SET premium = 0 WHERE id = '.$data[$i]['id'];
-        $pdo->query($sql);
+        $sql = 'UPDATE users SET premium = 0 WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':id' => $data[$i]['id']));
+
+        $sql = 'UPDATE profile SET premium = 0 WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':id' => $data[$i]['id']));
         
     }
     

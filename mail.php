@@ -1,9 +1,9 @@
 <?php
 require 'config.php';
-require '/var/www/classes/Mail.class.php';
-require '/var/www/classes/Session.class.php';
-require '/var/www/classes/System.class.php';
-require_once '/var/www/classes/Player.class.php';
+require BASE_PATH . 'classes/Mail.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/System.class.php';
+require_once BASE_PATH . 'classes/Player.class.php';
 
 
 $session = new Session();

@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 
 // 2019 Bad translation:
 // Objective: detect if there exists a (clan) war. A clan war exists if:
@@ -16,7 +17,7 @@
 
 $start = microtime(true);
 
-require '/var/www/classes/PDO.class.php';
+require_once BASE_PATH . 'classes/PDO.class.php';
 
 $pdo = PDO_DB::factory();
 
@@ -26,11 +27,11 @@ $info = $pdo->query($sql)->fetchAll();
 if($info['0']['id'] > 0){
     
     $sql = "SELECT id, attackerID, attackerClanID, victimID, victimClanID, attackDate, clanServer FROM clan_defcon";
-    $data = $pdo->query($sql);
-    
+    $data = $pdo->query($sql)->fetchAll();
+
     $defconArr = Array();
     $i = 0;
-    while($defconInfo = $data->fetch(PDO::FETCH_OBJ)){
+    foreach($data as $_row){ $defconInfo = (object)$_row;
         $i++;
         
         $defconArr[$i]['id'] = $defconInfo->id;
@@ -157,8 +158,9 @@ if($info['0']['id'] > 0){
         for($i=1;$i<sizeof($sqlArr)+1;$i++){
 
             $sql = "INSERT INTO clan_defcon (id, attackerID, attackerClanID, victimID, victimClanID, attackDate, groupServer)
-                    VALUES ('', '".$sqlArr[$i]['ATTACKER_ID']."', '".$sqlArr[$i]['CLAN_ID']."', '".$sqlArr[$i]['ATTACKER_VIC']."', '".$sqlArr[$i]['CLAN_VIC']."', '".$sqlArr[$i]['ATTACK_DATE']."', '".$sqlArr[$i]['CLAN_SERVER']."')";
-            $pdo->query($sql);
+                    VALUES ('', :attID, :clanID, :vicID, :vicClanID, :attDate, :clanServer)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array(':attID' => $sqlArr[$i]['ATTACKER_ID'], ':clanID' => $sqlArr[$i]['CLAN_ID'], ':vicID' => $sqlArr[$i]['ATTACKER_VIC'], ':vicClanID' => $sqlArr[$i]['CLAN_VIC'], ':attDate' => $sqlArr[$i]['ATTACK_DATE'], ':clanServer' => $sqlArr[$i]['CLAN_SERVER']));
 
         }
     
@@ -170,15 +172,18 @@ for($a=1;$a<sizeof($war);$a++){
 
     list($id1, $id2) = explode('x', $war[$a]['CLANS']);
 
-    $sql = "SELECT endDate FROM clan_war WHERE (clanID1 = '".$id1."' AND clanID2 = '".$id2."') OR (clanID1 = '".$id2."' AND clanID2 = '".$id1."') LIMIT 1";
-    $data = $pdo->query($sql)->fetchAll();
+    $sql = "SELECT endDate FROM clan_war WHERE (clanID1 = :id1 AND clanID2 = :id2) OR (clanID1 = :id2b AND clanID2 = :id1b) LIMIT 1";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(array(':id1' => $id1, ':id2' => $id2, ':id2b' => $id2, ':id1b' => $id1));
+    $data = $stmt->fetchAll();
     
     if(sizeof($data) == 1){
 
         $interval = 1; //add 1 day
 
-        $sql = "UPDATE clan_war SET endDate = DATE_ADD(endDate, INTERVAL '".$interval."' DAY) WHERE (clanID1 = '".$id1."' AND clanID2 = '".$id2."') OR (clanID1 = '".$id2."' AND clanID2 = '".$id1."') LIMIT 1";
-        $pdo->query($sql);
+        $sql = "UPDATE clan_war SET endDate = DATE_ADD(endDate, INTERVAL :interval DAY) WHERE (clanID1 = :id1 AND clanID2 = :id2) OR (clanID1 = :id2b AND clanID2 = :id1b) LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':interval' => $interval, ':id1' => $id1, ':id2' => $id2, ':id2b' => $id2, ':id1b' => $id1));
         
     } else {
 
@@ -189,8 +194,10 @@ for($a=1;$a<sizeof($war);$a++){
                 FROM clan_ddos
                 INNER JOIN round_ddos
                 ON round_ddos.id = clan_ddos.ddosID
-                WHERE (attackerClan = '".$id1."' AND victimClan = '".$id2."') OR (attackerClan = '".$id2."' AND victimClan = '".$id1."')";
-        $data = $pdo->query($sql)->fetchAll();
+                WHERE (attackerClan = :id1 AND victimClan = :id2) OR (attackerClan = :id2b AND victimClan = :id1b)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':id1' => $id1, ':id2' => $id2, ':id2b' => $id2, ':id1b' => $id1));
+        $data = $stmt->fetchAll();
 
         if(sizeof($data) > 0){
 
@@ -213,8 +220,9 @@ for($a=1;$a<sizeof($war);$a++){
         $duration = 2; //duration
 
         $sql = "INSERT INTO clan_war (clanID1, clanID2, startDate, endDate, score1, score2)
-                VALUES ('".$id1."', '".$id2."', NOW(), DATE_ADD(NOW(), INTERVAL '".$duration."' DAY), '".$score1."', '".$score2."')";
-        $pdo->query($sql);
+                VALUES (:id1, :id2, NOW(), DATE_ADD(NOW(), INTERVAL :duration DAY), :score1, :score2)";
+        $stmtWar = $pdo->prepare($sql);
+        $stmtWar->execute(array(':id1' => $id1, ':id2' => $id2, ':duration' => $duration, ':score1' => $score1, ':score2' => $score2));
         
     }
     

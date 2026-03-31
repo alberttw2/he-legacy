@@ -1,7 +1,7 @@
 <?php
 
-require_once '/var/www/classes/System.class.php';
-require_once '/var/www/classes/Session.class.php';
+require_once BASE_PATH . 'classes/System.class.php';
+require_once BASE_PATH . 'classes/Session.class.php';
 
 class Storyline {
     
@@ -137,7 +137,7 @@ class Storyline {
                     VALUES ('".$ip."', '".$reason."', NOW(), DATE_ADD(NOW(), INTERVAL '".$addTime."' SECOND), 1, 0)";
             $this->pdo->query($sql);
             
-            require_once '/var/www/classes/Mail.class.php';
+            require_once BASE_PATH . 'classes/Mail.class.php';
 
             $mail = new Mail();
             $mail->newMail($_SESSION['id'], _('Safenet is tracking you.'), $text, '1', -3);            
@@ -293,7 +293,7 @@ class Storyline {
         $sql = "UPDATE fbi SET dateEnd = DATE_ADD(dateEnd, INTERVAL '".$addTime."' SECOND), bounty = bounty + '".$bounty."' WHERE ip = '".$ip."' AND reason = '".$reason."'";
         $this->pdo->query($sql);
         
-        require_once '/var/www/classes/Mail.class.php';
+        require_once BASE_PATH . 'classes/Mail.class.php';
 
         $mail = new Mail();
         $mail->newMail($_SESSION['id'], _('Bounty increased.'), _('Your bounty has increased. We want you so bad.'), '2', -2);
@@ -402,7 +402,7 @@ class Storyline {
                     VALUES ('".$ip."', '".$reason."', '".$bounty."', NOW(), DATE_ADD(NOW(), INTERVAL '".$duration."' SECOND))";
             $this->pdo->query($sql);
         
-            require_once '/var/www/classes/Mail.class.php';
+            require_once BASE_PATH . 'classes/Mail.class.php';
 
             $mail = new Mail();
             $mail->newMail($_SESSION['id'], _('FBI suspect'), _('Hey bitch, FBI is now looking for you. Take care and expect attacks.'), '1', -2);            
@@ -689,10 +689,10 @@ class Storyline {
         
         $this->session->newQuery();
         $sql = 'SELECT doomCreatorID, doomClanID, status FROM hist_doom WHERE round = \''.$roundID.'\'';
-        $data = $this->pdo->query($sql);
-                
-        while($doomInfo = $data->fetch(PDO::FETCH_OBJ)){
-            
+        $data = $this->pdo->query($sql)->fetchAll();
+
+        foreach($data as $_row){ $doomInfo = (object)$_row;
+
             if($doomInfo->status == 2){
                 $index = $tries;
             } else {
@@ -746,7 +746,7 @@ class Storyline {
     
     public function doom_showFailed(){
         
-        require '/var/www/classes/Clan.class.php';
+        require BASE_PATH . 'classes/Clan.class.php';
         
         $player = new Player();
         $clan = new Clan();
@@ -762,13 +762,13 @@ class Storyline {
                 ON users.id = doom_abort.abortedBy
                 WHERE status = 2
                 ORDER BY doom_abort.abortDate DESC";
-        $data = $this->pdo->query($sql);
-        
+        $data = $this->pdo->query($sql)->fetchAll();
+
         $i = 0;
-        while ($doomInfo = $data->fetch(PDO::FETCH_OBJ)) {
+        foreach($data as $_row){ $doomInfo = (object)$_row;
 
             $i++;
-                        
+
             $doomClan = $doomInfo->clanid;
             $doomIP = long2ip($doomInfo->doomip);
             $userInfo = $player->getPlayerInfo($doomInfo->creatorid);
@@ -846,7 +846,7 @@ class Storyline {
             </div>
 <?php
 
-        require '/var/www/classes/Clan.class.php';
+        require BASE_PATH . 'classes/Clan.class.php';
         
         $player = new Player();
         $clan = new Clan();
@@ -855,13 +855,13 @@ class Storyline {
         $sql = "SELECT doomID, doomIP, creatorID, clanID, releaseDate, TIMESTAMPDIFF(SECOND, NOW(), doomDate) AS timeLeft 
                 FROM virus_doom 
                 WHERE status = 1";
-        $data = $this->pdo->query($sql);
-        
+        $data = $this->pdo->query($sql)->fetchAll();
+
         $i = 0;
-        while ($doomInfo = $data->fetch(PDO::FETCH_OBJ)) {
-            
+        foreach($data as $_row){ $doomInfo = (object)$_row;
+
             $i++;
-            
+
             $doomClan = $doomInfo->clanid;
             $doomID = $doomInfo->doomid;
             $doomIP = long2ip($doomInfo->doomip);
@@ -950,8 +950,10 @@ class Storyline {
     public function nsa_haveDoom(){
  
         $this->session->newQuery();
-        $sql = "SELECT COUNT(*) AS total FROM software WHERE softType = 29 AND userID = '".self::nsa_getID()."' AND isNPC = 1 LIMIT 1";
-        $total = $this->pdo->query($sql)->fetch(PDO::FETCH_OBJ)->total;
+        $sql = "SELECT COUNT(*) AS total FROM software WHERE softType = 29 AND userID = :nsaID AND isNPC = 1 LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':nsaID' => self::nsa_getID()));
+        $total = $stmt->fetch(PDO::FETCH_OBJ)->total;
         
         if($total == 1){
             return TRUE;
@@ -977,8 +979,10 @@ class Storyline {
         //TODO: e se for deletado? ddosado?
         
         $this->session->newQuery();
-        $sql = "SELECT id FROM software WHERE softType = 29 AND userID = '".self::nsa_getID()."' AND isNPC = 1 LIMIT 1";
-        return $this->pdo->query($sql)->fetch(PDO::FETCH_OBJ)->id;        
+        $sql = "SELECT id FROM software WHERE softType = 29 AND userID = :nsaID AND isNPC = 1 LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':nsaID' => self::nsa_getID()));
+        return $stmt->fetch(PDO::FETCH_OBJ)->id;
         
     }
 
@@ -993,8 +997,10 @@ class Storyline {
     public function md_getIP(){
         
         $this->session->newQuery();
-        $sql = "SELECT npcIP FROM npc WHERE id = '".self::md_getID()."' LIMIT 1";
-        return $this->pdo->query($sql)->fetch(PDO::FETCH_OBJ)->npcip;
+        $sql = "SELECT npcIP FROM npc WHERE id = :mdID LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':mdID' => self::md_getID()));
+        return $stmt->fetch(PDO::FETCH_OBJ)->npcip;
         
     }
     
@@ -1009,19 +1015,23 @@ class Storyline {
     public function evilcorp_getIP(){
         
         $this->session->newQuery();
-        $sql = "SELECT npcIP FROM npc WHERE id = '".self::evilcorp_getID()."' LIMIT 1";
-        return $this->pdo->query($sql)->fetch(PDO::FETCH_OBJ)->npcip;        
+        $sql = "SELECT npcIP FROM npc WHERE id = :evilcorpID LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':evilcorpID' => self::evilcorp_getID()));
+        return $stmt->fetch(PDO::FETCH_OBJ)->npcip;
         
     }
     
     public function evilcorp_getName(){
         
         $this->session->newQuery();
-        $sql = "SELECT name 
+        $sql = "SELECT name
                 FROM npc_info_en
-                WHERE npcID = '".self::evilcorp_getID()."' 
+                WHERE npcID = :evilcorpID
                 LIMIT 1";
-        return $this->pdo->query($sql)->fetch(PDO::FETCH_OBJ)->name; 
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':evilcorpID' => self::evilcorp_getID()));
+        return $stmt->fetch(PDO::FETCH_OBJ)->name;
         
     }
     
@@ -1041,8 +1051,8 @@ class Storyline {
     
     public function tutorial_start(){
         
-        require '/var/www/classes/Mission.class.php';
-        require '/var/www/classes/Mail.class.php';
+        require BASE_PATH . 'classes/Mission.class.php';
+        require BASE_PATH . 'classes/Mail.class.php';
         
         $player = new Player();
         $mission = new Mission();

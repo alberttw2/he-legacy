@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/config.php";
 session_start();
 if($_SESSION['id'] > 2)
 exit();
@@ -11,12 +12,13 @@ if(!isset($_SESSION['id'])){
 
 if(isset($_POST['name'])){
     
-    require '/var/www/classes/PDO.class.php';
+    require_once BASE_PATH . 'classes/PDO.class.php';
     $pdo = PDO_DB::factory();
         
     $sql = "INSERT INTO software (id, userID, softName, softVersion, softSize, softRam, softType, isNPC)
-            VALUES ('', '".$_SESSION['id']."', '".$_POST['name']."', '".$_POST['versao']."', '".$_POST['size']."', '".$_POST['ram']."', '".$_POST['type']."', 0)";
-    $pdo->query($sql);
+            VALUES ('', :uid, :name, :version, :size, :ram, :type, 0)";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(array(':uid' => $_SESSION['id'], ':name' => $_POST['name'], ':version' => $_POST['versao'], ':size' => $_POST['size'], ':ram' => $_POST['ram'], ':type' => $_POST['type']));
     
     
     
@@ -25,8 +27,9 @@ if(isset($_POST['name'])){
         $softID = $pdo->lastInsertId();
         
         $sql = "INSERT INTO software_running (id, softID, userID, ramUsage, isNPC)
-                VALUES ('', '".$softID."', '".$_SESSION['id']."', '".$_POST['ram']."', 0)";
-        $pdo->query($sql);
+                VALUES ('', :softID, :uid, :ram, 0)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':softID' => $softID, ':uid' => $_SESSION['id'], ':ram' => $_POST['ram']));
         
     }
     

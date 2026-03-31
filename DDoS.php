@@ -1,6 +1,7 @@
 <?php
+require_once __DIR__ . "/config.php";
 
-require '/var/www/classes/Session.class.php';
+require BASE_PATH . 'classes/Session.class.php';
 $session = new Session();
 
 $error = '';
@@ -22,7 +23,7 @@ if(!isset($_POST['ip']) || empty($_POST['ip'])){
     $error = 'Invalid IP address.';
 }
 
-require '/var/www/classes/System.class.php';
+require BASE_PATH . 'classes/System.class.php';
 $system = new System();
 
 if(!$system->validate($_POST['ip'], 'ip')){
@@ -32,9 +33,9 @@ if(!$system->validate($_POST['ip'], 'ip')){
 
 if($error == ''){
     
-    require '/var/www/classes/Player.class.php';
-    require '/var/www/classes/PC.class.php';
-    require '/var/www/classes/List.class.php';
+    require BASE_PATH . 'classes/Player.class.php';
+    require BASE_PATH . 'classes/PC.class.php';
+    require BASE_PATH . 'classes/List.class.php';
     
     $virus = new Virus();
     $player = new Player();

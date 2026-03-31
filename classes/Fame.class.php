@@ -1,6 +1,6 @@
 <?php
 
-require '/var/www/classes/Storyline.class.php';
+require BASE_PATH . 'classes/Storyline.class.php';
 
 class Fame {
     
@@ -175,7 +175,7 @@ foreach($th as $thName){
                             </thead>
                             <tbody>
 <?php
-require $require;
+if (file_exists($require)) { require $require; } else { echo '<tr><td colspan="'.count($th).'">'._('No data available').'</td></tr>'; }
 ?>
                             </tbody>
                         </table>
@@ -188,7 +188,7 @@ require $require;
 
             $page .= 'round='.$roundGet.'&page';
             
-            require_once '/var/www/classes/Pagination.class.php';
+            require_once BASE_PATH . 'classes/Pagination.class.php';
             $pagination = new Pagination();
 
             $pagination->paginate($top, 'fame', 50, $page, 1);

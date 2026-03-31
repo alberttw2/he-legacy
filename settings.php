@@ -1,9 +1,9 @@
 <?php
 
 require 'config.php';
-require '/var/www/classes/Session.class.php';
-require '/var/www/classes/Player.class.php';
-require '/var/www/classes/System.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/Player.class.php';
+require BASE_PATH . 'classes/System.class.php';
 
 $session = new Session();
 $system = new System();
@@ -63,7 +63,7 @@ if(isset($_POST)){
 
             $_SESSION['language'] = 'pt_BR';
             $session->addMsg('Language changed to portuguese.', 'notice');
-            header("Location:https://br.hackerexperience.com/");
+            header("Location:".$gameDomainProto."/");
             exit();
         } elseif($lang == 'English'){
             
@@ -74,7 +74,7 @@ if(isset($_POST)){
             
             $_SESSION['language'] = 'en_US';
             $session->addMsg('Language changed to english.', 'notice');
-            header("Location:https://en.hackerexperience.com/");
+            header("Location:".$gameDomainProto."/");
             exit();
         }
         

@@ -97,88 +97,46 @@ class HardwareVPC extends Player {
             $page = 'home';
         }
                 
-        $cpu = $this->cpu;
-        $net = $this->net;
-        $hdd = $this->hdd;
-        $ram = (float)$this->ram;
+        $cpuDisplay = HardwareFormat::cpu($this->cpu);
+        $netDisplay = HardwareFormat::net($this->net);
+        $hddDisplay = HardwareFormat::hdd($this->hdd);
+        $ramDisplay = HardwareFormat::ram((float)$this->ram);
+        $xhdDisplay = HardwareFormat::xhd($this->xhd);
 
-        if($cpu < 1000){
-            $cpuStr = 'MHz';
-        } else {
-            $cpuStr = 'GHz';
-            $cpu /= 1000;
-        }
-        
-        
-        if($net == 1000){
-            $net = 1;
-            $netStr = 'Gbit';
-        } else {
-            $netStr = ' Mbit';
-        }
-        
-        if(is_float($cpu)){
-            $cpu = round($cpu, 1);
-        }
-        
-        $hdd /= 1000;
-        if(is_float($hdd)){
-            $hdd = round($hdd, 1);
-        }
-        if($hdd < 1){
-            $hddStr = 'MB';
-            $hdd *= 1000;
-        } else {
-            $hddStr = 'GB';
-        }
-        
-        if(is_float($ram)){
-            $ram = round($ram, 1);
-        }
-        
-        if(is_float($net)){
-            $net = round($net, 1);
-        }
-        
         ?>
-        
+
         <ul class="hard-box">
             <li>
                     <div class="left"><span class="he32-cpu32"></span></div>
                     <div class="right">
-                            <strong><?php echo $cpu; ?></strong>
-                            <?php echo $cpuStr; ?>
+                            <strong><?php echo $cpuDisplay; ?></strong>
                     </div>
             </li>
             <li>
                     <div class="left"><span class="he32-hdd32"></span></div>
                     <div class="right">
-                            <strong><?php echo $hdd; ?></strong>
-                            <?php echo $hddStr; ?>
+                            <strong><?php echo $hddDisplay; ?></strong>
                     </div>
             </li>
             <li>
                 <div class="left"><span class="he32-ddr-memory"></span></div>
                     <div class="right">
-                            <strong><?php echo $ram; ?></strong>
-                            MB
+                            <strong><?php echo $ramDisplay; ?></strong>
                     </div>
             </li>
             <li>
                     <div class="left"><span class="he32-net32"></span></div>
                     <div class="right">
-                            <strong><?php echo $net; ?></strong>
-                            <?php echo $netStr; ?>
+                            <strong><?php echo $netDisplay; ?></strong>
                     </div>
             </li>
             <?php if($remote == 0 && $this->xhd != 0){ ?>
                 <li>
                         <div class="left"><span class="he32-xhd32"></span></div>
                         <div class="right">
-                                <strong><?php echo $this->xhd / 1000; ?></strong>
-                                GB
+                                <strong><?php echo $xhdDisplay; ?></strong>
                         </div>
-                </li>            
+                </li>
             <?php } ?>
         </ul> 
 
@@ -266,23 +224,10 @@ class HardwareVPC extends Player {
                 
                 $pcInfo = self::getPCSpec('', $pcType, $id, $offset);
                                 
-                $cpu = $pcInfo['CPU'];
-                $hdd = round($pcInfo['HDD']) / 1000;
-                if($hdd < 1){
-                    $hdd = $pcInfo['HDD'];
-                    $hddStr = ' MB';
-                } else {
-                    $hddStr = ' GB';
-                }
-                $ram = $pcInfo['RAM'];
-                $name = $pcInfo['NAME'];               
-
-                if($cpu < 1000){
-                    $cpuStr = ' MHz';
-                } else {
-                    $cpuStr = ' GHz';
-                    $cpu /= 1000;
-                }
+                $cpuStr = HardwareFormat::cpu($pcInfo['CPU']);
+                $hddStr = HardwareFormat::hdd($pcInfo['HDD']);
+                $ramStr = HardwareFormat::ram($pcInfo['RAM']);
+                $name = $pcInfo['NAME'];
 
 
                 ?>
@@ -296,7 +241,7 @@ class HardwareVPC extends Player {
                             <a href="<?php echo $link.$pcInfo['ID']; ?>"><span class="label">Upgrade</span></a>
                         </div>
 
-                        <div class="widget-content padding">        
+                        <div class="widget-content padding">
 
                             <ul class="list">
                                 <a href="<?php echo $link.$pcInfo['ID']; ?>">
@@ -308,13 +253,13 @@ class HardwareVPC extends Player {
                                             <div class="list-ip">
                                                 <?php echo $name; ?>
                                             </div>
-                                            <div class="list-user">
-                                                <span class="he16-cpu" style="margin-top: 4px;"></span>
-                                                <small><?php echo $cpu.$cpuStr; ?></small>
-                                                <span class="he16-hdd" style="margin-top: 4px;"></span>
-                                                <small><?php echo $hdd.$hddStr; ?></small>
-                                                <span class="he16-ram" style="margin-top: 4px;"></span>
-                                                <small><?php echo $ram; ?> MB</small>
+                                            <div class="list-user" style="line-height:1.8;">
+                                                <span class="he16-cpu" style="margin-top:4px;"></span>
+                                                <small><?php echo $cpuStr; ?></small><br/>
+                                                <span class="he16-hdd" style="margin-top:4px;"></span>
+                                                <small><?php echo $hddStr; ?></small><br/>
+                                                <span class="he16-ram" style="margin-top:4px;"></span>
+                                                <small><?php echo $ramStr; ?></small>
                                             </div>
                                         </div>
                                         <div style="clear: both;"></div>
@@ -522,9 +467,9 @@ class HardwareVPC extends Player {
         Details of server <b><?php echo $pcInfo['NAME']; ?></b>: <br/><br/>  
                 
         <table>
-            <tr><td><b>CPU:</b> </td><td><?php echo $cpuItens[$pcInfo['CPU']]['POW']; ?> MHz</td></tr>
-            <tr><td><b>RAM:</b> </td><td><?php echo $ramItens[$pcInfo['RAM']]['POW']; ?> MB</td></tr>
-            <tr><td><b>HDD:</b> </td><td><?php echo $hddItens[$pcInfo['HDD']]['POW']; ?> MB</td></tr>
+            <tr><td><b>CPU:</b> </td><td><?php echo HardwareFormat::cpu($cpuItens[$pcInfo['CPU']]['POW']); ?></td></tr>
+            <tr><td><b>RAM:</b> </td><td><?php echo HardwareFormat::ram($ramItens[$pcInfo['RAM']]['POW']); ?></td></tr>
+            <tr><td><b>HDD:</b> </td><td><?php echo HardwareFormat::hdd($hddItens[$pcInfo['HDD']]['POW']); ?></td></tr>
         </table>
                 
         <br/><br/>
@@ -546,11 +491,11 @@ class HardwareVPC extends Player {
 
         $this->session->newQuery();
         $sqlSelect = "SELECT ramUsage FROM software_running WHERE userID = $id AND isNPC = $npc";
-        $data = $this->pdo->query($sqlSelect);
+        $data = $this->pdo->query($sqlSelect)->fetchAll();
 
         $totalRam = '0';
 
-        while ($runningInfo = $data->fetch(PDO::FETCH_OBJ)) {
+        foreach ($data as $_row) { $runningInfo = (object)$_row;
 
             $totalRam += $runningInfo->ramusage;
         }
@@ -592,11 +537,11 @@ class HardwareVPC extends Player {
 
         $this->session->newQuery();
         $sqlSelect = "SELECT softSize FROM software WHERE userID = $id AND isNPC = $npc";
-        $data = $this->pdo->query($sqlSelect);
+        $data = $this->pdo->query($sqlSelect)->fetchAll();
 
         $totalSize = '0';
 
-        while ($softInfo = $data->fetch(PDO::FETCH_OBJ)) {
+        foreach ($data as $_row) { $softInfo = (object)$_row;
 
             $totalSize += $softInfo->softsize;
             
@@ -743,7 +688,7 @@ class HardwareVPC extends Player {
 
                     if($isClan == 1){
                         
-                        require '/var/www/classes/Clan.class.php';
+                        require BASE_PATH . 'classes/Clan.class.php';
                         $clan = new Clan();
 
                         $clanIP = $clan->getClanInfo($clan->getPlayerClan())->clanip;
@@ -758,7 +703,7 @@ class HardwareVPC extends Player {
                         
                     } else {
                         
-                        require '/var/www/classes/Process.class.php';
+                        require BASE_PATH . 'classes/Process.class.php';
                         
                         $logID = $_SESSION['id'];
                         $cid = '';
@@ -780,7 +725,7 @@ class HardwareVPC extends Player {
                     if($isClan == 0){
                         if(self::getTotalPCs() == 1){
                             
-                            require '/var/www/classes/Social.class.php';
+                            require BASE_PATH . 'classes/Social.class.php';
                             $social = new Social();
                             
                             //add badge 'buy second pc'
@@ -823,7 +768,7 @@ class HardwareVPC extends Player {
 
                     if($xhdInfo['TOTAL'] == 0){
 
-                        require '/var/www/classes/Social.class.php';
+                        require BASE_PATH . 'classes/Social.class.php';
                         $social = new Social();
 
                         //add badge 'buy second xhd'
@@ -850,7 +795,7 @@ class HardwareVPC extends Player {
 
                     if($isClan == 1){
                         
-                        require '/var/www/classes/Clan.class.php';
+                        require BASE_PATH . 'classes/Clan.class.php';
                         $clan = new Clan();
 
                         $clanIP = $clan->getClanInfo($clan->getPlayerClan())->clanip;
@@ -914,7 +859,7 @@ class HardwareVPC extends Player {
                         if($act == 'net'){
                             if(!array_key_exists($partID + 1, $partArray)){
 
-                                require '/var/www/classes/Social.class.php';
+                                require BASE_PATH . 'classes/Social.class.php';
                                 $social = new Social();
 
                                 //add badge 'max internet upgrade'
@@ -934,7 +879,7 @@ class HardwareVPC extends Player {
                                     
                                     if($hardwareInfo[strtoupper($act)] == $partArray[$partID]['POW'] * 4){
                                         
-                                        require '/var/www/classes/Social.class.php';
+                                        require BASE_PATH . 'classes/Social.class.php';
                                         $social = new Social();
                                         
                                         if($act == 'cpu'){
@@ -955,7 +900,7 @@ class HardwareVPC extends Player {
                                 
                                 if($pcSpec['CPU'] == 4000 && $pcSpec['HDD'] == 100000 && $pcSpec['RAM'] == 2048){
 
-                                    require_once '/var/www/classes/Social.class.php';
+                                    require_once BASE_PATH . 'classes/Social.class.php';
                                     $social = new Social();
 
                                     //add badge 'max upgrades de 1 pc'
@@ -984,7 +929,7 @@ class HardwareVPC extends Player {
 
                     if($cid == 0){
                         $cid = '';
-                        require '/var/www/classes/Process.class.php';
+                        require BASE_PATH . 'classes/Process.class.php';
                     }
                     
                     $process = new Process();
@@ -992,18 +937,16 @@ class HardwareVPC extends Player {
 
                     $this->session->addMsg('Your hardware was upgraded.', 'success');
                     
-                    if($act == 'hdd' || $act == 'xhd'){
-                        $power = ($partArray[$partID]['POW'] / 1000) . ' GB';
-                    } elseif($act == 'cpu'){
-                        if ($partArray[$partID]['POW'] >= 1000) {
-                            $power = ($partArray[$partID]['POW'] / 1000) . ' GHz';
-                        } else {
-                            $power = $partArray[$partID]['POW'] . ' MHz';
-                        }
+                    if($act == 'cpu'){
+                        $power = HardwareFormat::cpu($partArray[$partID]['POW']);
+                    } elseif($act == 'hdd'){
+                        $power = HardwareFormat::hdd($partArray[$partID]['POW']);
+                    } elseif($act == 'xhd'){
+                        $power = HardwareFormat::xhd($partArray[$partID]['POW']);
                     } elseif ($act == 'ram'){
-                        $power = $partArray[$partID]['POW'] . ' MB';
+                        $power = HardwareFormat::ram($partArray[$partID]['POW']);
                     } else {
-                        $power = $partArray[$partID]['POW'] . ' Mbit';
+                        $power = HardwareFormat::net($partArray[$partID]['POW']);
                     }
                     
                     $finances = new Finances();
@@ -1113,8 +1056,8 @@ class HardwareVPC extends Player {
                 switch($page){
                     
                     case 'CPU':
-                        $unit = ' MHz';
-                        
+                        $formatFunc = 'cpu';
+
                         ?>
 
                             <div class="widget-title">
@@ -1138,7 +1081,7 @@ class HardwareVPC extends Player {
                         
                         break;
                     case 'RAM':
-                        $unit = ' MB';
+                        $formatFunc = 'ram';
                         
                         ?>
 
@@ -1171,7 +1114,7 @@ class HardwareVPC extends Player {
                         
                         break;
                     case 'HDD':
-                        $unit = ' GB';
+                        $formatFunc = 'hdd';
                         ?>
 
                                 </tbody>
@@ -1226,22 +1169,14 @@ class HardwareVPC extends Player {
                             $value = '&nbsp;';
                         }                        
                         
-                        $div = 1;
-                        if($page == 'HDD'){
-                            if($power < 1000){
-                                $unit = ' MB';
-                            } else {
-                                $div = 1000;
-                                $unit = ' GB';
-                            }
-                        }
-                        
+                        $powerDisplay = HardwareFormat::$formatFunc($power);
+
                         ?>
-                            
+
                         <tr id="<?php echo strtolower($page).str_replace(',', '.', $power); ?>" class="<?php echo $i; ?>">
                             <td><?php echo $ico; ?></td>
                             <td><?php echo $name; ?></td>
-                            <td><?php echo $power/$div.$unit; ?></td>
+                            <td><?php echo $powerDisplay; ?></td>
                             <td><?php echo $value; ?></td>
                             <td><?php echo $action; ?></td>
                         </tr>
@@ -1284,12 +1219,12 @@ class HardwareVPC extends Player {
                 
                 <?php
                 
-                require_once '/var/www/classes/Finances.class.php';
+                require_once BASE_PATH . 'classes/Finances.class.php';
                 $finances = new Finances();
                 
                 if($internet != ''){
                     
-                    require '/var/www/classes/Clan.class.php';
+                    require BASE_PATH . 'classes/Clan.class.php';
                     $clan = new Clan();
                     
                     $clanInfo = parent::getIDByIP($clan->getClanInfo($clan->getPlayerClan())->clanip, 'NPC');
@@ -1351,7 +1286,7 @@ class HardwareVPC extends Player {
         
                 <?php
         
-                require_once '/var/www/classes/Finances.class.php';
+                require_once BASE_PATH . 'classes/Finances.class.php';
                 $finances = new Finances();                
                 
                 $price = self::getXHDPrice(); 
@@ -1511,7 +1446,7 @@ class HardwareVPC extends Player {
                         
                 if($internet != ''){
                     
-                    require '/var/www/classes/Clan.class.php';
+                    require BASE_PATH . 'classes/Clan.class.php';
                     $clan = new Clan();
                     
                     $clanInfo = parent::getIDByIP($clan->getClanInfo($clan->getPlayerClan())->clanip, 'NPC');
@@ -1535,7 +1470,7 @@ class HardwareVPC extends Player {
                     if($netItens[$i]['POW'] >= $pow){
 
                         $name = $netItens[$i]['NAME'];
-                        $power = $netItens[$i]['POW'].' Mbit';
+                        $power = HardwareFormat::net($netItens[$i]['POW']);
                         $price = '$<span id="price">'.number_format($netItens[$i]['PRICE']).'</span>';
                         
                         if ($netItens[$i]['POW'] > $pow) {
@@ -1777,7 +1712,7 @@ class HardwareVPC extends Player {
                                                 
                     } else {
                         
-                        require_once '/var/www/classes/Clan.class.php';
+                        require_once BASE_PATH . 'classes/Clan.class.php';
                         $clan = new Clan();
 
                         $clanInfo = parent::getIDByIP($clan->getClanInfo($clan->getPlayerClan())->clanip, 'NPC');
@@ -1822,23 +1757,10 @@ class HardwareVPC extends Player {
                         
                         $pcInfo = self::getPCSpec('', $pcType, $uid, $offset);
                         
-                        $cpu = $pcInfo['CPU'];
-                        $hdd = $pcInfo['HDD'] / 1000;
-                        if($hdd < 1){
-                            $hdd *= 1000;
-                            $hddStr = ' MB';
-                        } else {
-                            $hddStr = ' GB';
-                        }
-                        $ram = $pcInfo['RAM'];
-                        $name = $pcInfo['NAME'];          
-
-                        if($cpu < 1000){
-                            $cpuStr = ' MHz';
-                        } else {
-                            $cpuStr = ' GHz';
-                            $cpu /= 1000;
-                        }    
+                        $cpuStr = HardwareFormat::cpu($pcInfo['CPU']);
+                        $hddStr = HardwareFormat::hdd($pcInfo['HDD']);
+                        $ramStr = HardwareFormat::ram($pcInfo['RAM']);
+                        $name = $pcInfo['NAME'];
 
                         if($id == $pcInfo['ID']){
                             $style = ' class="li-click hard-checked"';
@@ -1861,11 +1783,11 @@ class HardwareVPC extends Player {
                                         </div>
                                         <div class="list-user">
                                             <span class="he16-cpu" style="margin-top: 4px;"></span>
-                                            <small><?php echo $cpu.$cpuStr; ?></small>
+                                            <small><?php echo $cpuStr; ?></small>
                                             <span class="he16-hdd" style="margin-top: 4px;"></span>
-                                            <small><?php echo $hdd.$hddStr; ?></small>
+                                            <small><?php echo $hddStr; ?></small>
                                             <span class="he16-ram" style="margin-top: 4px;"></span>
-                                            <small><?php echo $ram; ?> MB</small>
+                                            <small><?php echo $ramStr; ?></small>
                                         </div>
                                     </div>
                                     <div style="clear: both;"></div>
@@ -2269,7 +2191,7 @@ class HardwareVPC extends Player {
                 // 2019: Webserver deleted
                 } elseif($selectedSoft->softtype == 18){ //deletou o webserver
                     
-                    require_once '/var/www/classes/Internet.class.php';
+                    require_once BASE_PATH . 'classes/Internet.class.php';
                     $internet = new Internet();
                     
                     $internet->webserver_shutdown($id);
@@ -2319,12 +2241,12 @@ class HardwareVPC extends Player {
         
         $name = 'Server #';
         
-        require_once '/var/www/classes/Ranking.class.php';
+        require_once BASE_PATH . 'classes/Ranking.class.php';
         $ranking = new Ranking();
 
         $ranking->updateMoneyStats('1', $stdPrice);              
         
-        require_once '/var/www/classes/Finances.class.php';
+        require_once BASE_PATH . 'classes/Finances.class.php';
         $finances = new Finances();
         
         if($internet != ''){
@@ -2360,12 +2282,12 @@ class HardwareVPC extends Player {
                 VALUES ('".$_SESSION['id']."', '', '".$name."')";
         $this->pdo->query($sql);
         
-        require_once '/var/www/classes/Finances.class.php';
+        require_once BASE_PATH . 'classes/Finances.class.php';
         $finances = new Finances();
         
         $finances->debtMoney($price, $bankAcc);
         
-        require_once '/var/www/classes/Ranking.class.php';
+        require_once BASE_PATH . 'classes/Ranking.class.php';
         $ranking = new Ranking();
 
         $ranking->updateMoneyStats(1, $price);        
@@ -2378,7 +2300,7 @@ class HardwareVPC extends Player {
      
         echo 'This function will stay obsolete soon. 14-10-2013';
         
-        require_once '/var/www/classes/Finances.class.php';
+        require_once BASE_PATH . 'classes/Finances.class.php';
         $finances = new Finances();
         
         echo "Buy new $part for $".$itemInfo[$id]['PRICE']."<br/><br/>";
@@ -2428,10 +2350,10 @@ class HardwareVPC extends Player {
     
     public function commitUpgrade($id, $itemInfo, $part, $bankAccount, $internet = 0){
         
-        require_once '/var/www/classes/Finances.class.php';
+        require_once BASE_PATH . 'classes/Finances.class.php';
         $finances = new Finances();
 
-        require_once '/var/www/classes/Ranking.class.php';
+        require_once BASE_PATH . 'classes/Ranking.class.php';
         $ranking = new Ranking();
 
             
@@ -2741,7 +2663,7 @@ class SoftwareVPC extends Player {
                     $system->handleError('Invaaaalid bank account.', $redirect);
                 }
                 
-                require '/var/www/classes/Finances.class.php';
+                require BASE_PATH . 'classes/Finances.class.php';
                 $finances = new Finances();
 
                 if($finances->totalMoney() < $price){
@@ -2760,7 +2682,7 @@ class SoftwareVPC extends Player {
                     $system->handleError('This account does not exists.', $redirect);
                 }                                                
                 
-                require '/var/www/classes/Process.class.php';
+                require BASE_PATH . 'classes/Process.class.php';
                 $process = new Process();
                 
                 if ($process->newProcess($_SESSION['id'], 'RESEARCH', '', 'local', $softID, $name, $acc.'/'.$deleteOldVersion, '0')) {
@@ -2796,7 +2718,7 @@ class SoftwareVPC extends Player {
                     $system->handleError('Invalid text-file name. Allowed are <strong>azAZ09- _</strong>, starting with <strong>azAZ09</strong>.', $redirect);
                 }
                 
-                require '/var/www/classes/Purifier.class.php';
+                require BASE_PATH . 'classes/Purifier.class.php';
                 $purifier = new Purifier();
                 $purifier->set_config('software-text');
                 
@@ -2843,7 +2765,7 @@ class SoftwareVPC extends Player {
                     $system->handleError('Invalid text-file name. Allowed are <strong>azAZ09- _</strong>, starting with <strong>azAZ09</strong>.', $redirect);
                 }
                 
-                require '/var/www/classes/Purifier.class.php';
+                require BASE_PATH . 'classes/Purifier.class.php';
                 $purifier = new Purifier();
                 $purifier->set_config('software-text');
                 
@@ -3236,7 +3158,7 @@ class SoftwareVPC extends Player {
 
                     } else {
 
-                        require_once '/var/www/classes/Clan.class.php';
+                        require_once BASE_PATH . 'classes/Clan.class.php';
                         $clan = new Clan();
                         
                         if($clan->playerHaveClan()){
@@ -3531,7 +3453,7 @@ class SoftwareVPC extends Player {
                                 </tr>
                                 <tr>
                                         <td><span class="item"><?php echo _("RAM usage"); ?></span></td>
-                                        <td><?php echo $softInfo->softram; ?> MHz</td>
+                                        <td><?php echo $softInfo->softram . ' MB'; ?></td>
                                 </tr>
                                 <tr>
                                         <td><span class="item"><?php echo _("Last Edit"); ?></span></td>
@@ -3702,7 +3624,7 @@ class SoftwareVPC extends Player {
     
     public function showSoftware($local, $pcType, $id, $folderID = '') {
 
-        require_once '/var/www/classes/Mission.class.php';
+        require_once BASE_PATH . 'classes/Mission.class.php';
 
         $this->mission = new Mission();
 
@@ -3731,12 +3653,12 @@ class SoftwareVPC extends Player {
                     
                 } elseif($_SESSION['MISSION_TYPE'] > 49){
 
-                    require '/var/www/classes/Storyline.class.php';
+                    require BASE_PATH . 'classes/Storyline.class.php';
                     $storyline = new Storyline();
                     
                     if($_SESSION['LOGGED_IN'] != $storyline->nsa_getIP()){
                         
-                        require '/var/www/classes/Clan.class.php';
+                        require BASE_PATH . 'classes/Clan.class.php';
                         $clan = new Clan();
 
                         if($clan->playerHaveClan()){
@@ -3793,7 +3715,7 @@ class SoftwareVPC extends Player {
                          FROM software 
                          WHERE userid = $id AND isNPC = $npc AND isFolder = 0 
                          ORDER BY softType, softVersion DESC, softLastEdit ASC";
-            $data = $this->pdo->query($sqlSelect);
+            $data = $this->pdo->query($sqlSelect)->fetchAll();
 
         } else {
             
@@ -3806,7 +3728,7 @@ class SoftwareVPC extends Player {
                     ON software.id = software_folders.softID
                     WHERE software_folders.folderID = '".$folderID."' AND software.userID = $id AND software.isNPC = $npc
                     ORDER BY software.softType, software.softVersion DESC, software.softLastEdit ASC";
-            $data = $this->pdo->query($sql);
+            $data = $this->pdo->query($sql)->fetchAll();
                         
         }
         
@@ -3827,7 +3749,7 @@ class SoftwareVPC extends Player {
             
             $hdUsage = 0;
             $haveText = FALSE;
-            while ($softInfo = $data->fetch(PDO::FETCH_OBJ)) {
+            foreach ($data as $_row) { $softInfo = (object)$_row;
                 
                 $softInstalled = '0';
                 $class = '';
@@ -4058,15 +3980,12 @@ echo $str;
 <?php
             
             if($hdUsage == 0){
-                
 ?>
-        <script>
-            window.onload = function () {
-                $('.table-software').replaceWith('<br/><center><?php echo _("There are no softwares to display."); ?></center>');
-            }
-        </script>
+                <div class="alert alert-info" style="margin-top:10px;">
+                    <strong><?php echo _("No software installed."); ?></strong>
+                    <?php echo _("Visit the"); ?> <a href="internet"><?php echo _("Download Center"); ?></a> <?php echo _("to download your first programs."); ?>
+                </div>
 <?php
-                
             }
 
             if($local == 0){
@@ -4096,7 +4015,7 @@ echo $str;
             $porct = round($hdUsage / $hddInfo['HDD'], 3) * 100 ."%";
             
             if($local == 1 && $hdUsage >= 50000 && rand(1,10) == 1){
-                require '/var/www/classes/Social.class.php';
+                require BASE_PATH . 'classes/Social.class.php';
                 $social = new Social();
                 $social->badge_add(52, $_SESSION['id']);
             }
@@ -4135,15 +4054,15 @@ echo $str;
                     $rates = $this->hardware->getInternetRates($internet);
 ?>
                                     <div style="margin-top: 5px;">
-                                        <span class="small"><strong><?php echo $internet; ?> Mbit</strong> ( <?php echo $rates['downloadstr']; ?> - <?php echo $rates['uploadstr']; ?>)</span>
+                                        <span class="small"><strong><?php echo HardwareFormat::net($internet); ?></strong> ( <?php echo $rates['downloadstr']; ?> - <?php echo $rates['uploadstr']; ?>)</span>
                                     </div>
 <?php
 
                 }
 ?>
                                     <div class="hd-usage">
-                                        <!--<div id="chart-me" class="percentage easyPieChart" data-percent="<?php //echo ceil($porct); ?>">-->
-                                        <div class="chart easyPieChart chartpie" data-percent="<?php echo ceil($porct); ?>">
+                                        <!--<div id="chart-me" class="percentage easyPieChart" data-percent="<?php //echo ceil((float)$porct); ?>">-->
+                                        <div class="chart easyPieChart chartpie" data-percent="<?php echo ceil((float)$porct); ?>">
                                             <div id="downmeplz"><span id="percentpie"></span></div>
                                         </div>
                                         <div class="hd-usage-text"><?php echo _("HDD Usage"); ?></div>
@@ -4258,7 +4177,18 @@ if($npc == 1 && $local == 0){
             }
 
         } else {
-            echo 'Something went wrong. Contact admin';
+            if ($local == '0') {
+?>
+                <div class="alert alert-info"><?php echo _("There are no softwares to display."); ?></div>
+<?php
+            } else {
+?>
+                <div class="alert alert-info">
+                    <strong><?php echo _("No software installed."); ?></strong>
+                    <?php echo _("Visit the"); ?> <a href="internet"><?php echo _("Download Center"); ?></a> <?php echo _("to download your first programs."); ?>
+                </div>
+<?php
+            }
         }
     }
     
@@ -5631,9 +5561,9 @@ if($npc == 1 && $local == 0){
         ";
 
         $this->session->newQuery();
-        $data = $this->pdo->query($sqlSelect);
+        $data = $this->pdo->query($sqlSelect)->fetchAll();
 
-        if (count($data) != '0') {
+        if (count($data) > 0) {
 
             ?>
                 
@@ -5655,7 +5585,8 @@ if($npc == 1 && $local == 0){
             <?php
             
             $i = $usedRam = $usedRamPerc = 0;
-            while ($softInfo = $data->fetch(PDO::FETCH_OBJ)) {
+            foreach ($data as $row) {
+                $softInfo = (object)$row;
 
                 if (!self::isVirus($softInfo->softtype)) {
 
@@ -5992,7 +5923,7 @@ if($npc == 1 && $local == 0){
             $softwareRankingCategory = '#'.number_format($softwareRankingCategory);
         }
                 
-        require '/var/www/classes/Finances.class.php';
+        require BASE_PATH . 'classes/Finances.class.php';
         $finances = new Finances();
 
         if($finances->totalMoney() >= $price){
@@ -6337,7 +6268,7 @@ $finances->htmlSelectBankAcc();
                                         <div id="uploadForm"></div>
                                     </form>
                                     <div class="hd-usage">
-                                        <div class="chart easyPieChart chartpie" data-percent="<?php echo ceil($porct); ?>">
+                                        <div class="chart easyPieChart chartpie" data-percent="<?php echo ceil((float)$porct); ?>">
                                             <div id="downmeplz"><span id="percentpie"></span></div>
                                         </div>
                                         <div class="hd-usage-text"><?php echo _('XHD usage'); ?></div>
@@ -6369,8 +6300,8 @@ class LogVPC extends Player {
             $this->pdo = PDO_DB::factory();
         }
 
-        require_once '/var/www/classes/Session.class.php';
-        require_once '/var/www/classes/NPC.class.php';
+        require_once BASE_PATH . 'classes/Session.class.php';
+        require_once BASE_PATH . 'classes/NPC.class.php';
 
         $this->session = new Session();
         $this->npc = new NPC();
@@ -6645,14 +6576,6 @@ class LogVPC extends Player {
 @media (min-width:1824px) { .adslot_log { width: 160px; height: 600px; margin-top: 8px;} .logarea{height:500px} .logleft { display:block !important; }} 
 </style>
 <div class="logleft">
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<!-- log both responsive -->
-<ins class="adsbygoogle adslot_log"
-     style="display:inline-block"
-     data-ad-client="ca-pub-7193007468156667"
-     data-ad-slot="3338147350"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
 </script>
 </div>
 <?php } elseif($_SESSION['premium'] == 0) { ?>
@@ -6666,14 +6589,6 @@ class LogVPC extends Player {
 @media (min-width:1824px) { .adslot_log { width: 200px; height: 200px; margin-top: 50px;} .logarea{height:300px}  .logleft { display:block !important; }}
 </style>
 <div class="logleft">
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<!-- log both responsive -->
-<ins class="adsbygoogle adslot_log"
-     style="display:inline-block"
-     data-ad-client="ca-pub-7193007468156667"
-     data-ad-slot="3338147350"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
 </script>
 </div>
 <?php } ?>
@@ -6690,14 +6605,6 @@ class LogVPC extends Player {
                 </div>
                 <div class="span2">
 <?php if($_SESSION['premium'] == 0){ ?>
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<!-- log both responsive -->
-<ins class="adsbygoogle adslot_log"
-     style="display:inline-block"
-     data-ad-client="ca-pub-7193007468156667"
-     data-ad-slot="3338147350"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
 </script>
 <?php } ?>
                 </div>
@@ -7116,7 +7023,7 @@ class Virus extends Player {
             $ddosPower = round($ddosPower / 5);
         }
         
-        require_once '/var/www/classes/Clan.class.php';
+        require_once BASE_PATH . 'classes/Clan.class.php';
         $clan = new Clan();
 
         $myClanID = NULL;
@@ -7162,7 +7069,7 @@ class Virus extends Player {
 
             } else {
 
-                require_once '/var/www/classes/NPC.class.php';
+                require_once BASE_PATH . 'classes/NPC.class.php';
                 $npc = new NPC();
 
                 $npcInfo = $npc->getNPCInfo($victimInfo['0']['id']);
@@ -7490,7 +7397,7 @@ class Virus extends Player {
 
                                 }
 
-                                require_once '/var/www/classes/Storyline.class.php';
+                                require_once BASE_PATH . 'classes/Storyline.class.php';
                                 $storyline = new Storyline();
 
                                 if($storyline->fbi_isset($ip)){
@@ -7510,7 +7417,7 @@ class Virus extends Player {
 
                         } else {
 
-                            require_once '/var/www/classes/Process.class.php';
+                            require_once BASE_PATH . 'classes/Process.class.php';
                             $process = new Process();
           
                             // 2019: TODO: Verify whether that line \/ is working. You really should!
@@ -7594,7 +7501,7 @@ class Virus extends Player {
 
                             if($seizedAfter == 1){
 
-                                require_once '/var/www/classes/Storyline.class.php';
+                                require_once BASE_PATH . 'classes/Storyline.class.php';
                                 $storyline = new Storyline();
 
                                 if($storyline->fbi_isset($ip)){
@@ -7613,7 +7520,7 @@ class Virus extends Player {
                             $report .= self::DDoS_studyClanExp($victimInfo, $ddosPower);
                             
                             //add badge
-                            require_once '/var/www/classes/Social.class.php';
+                            require_once BASE_PATH . 'classes/Social.class.php';
                             $social = new Social();
                             
                             $social->badge_add(13, $_SESSION['id']);
@@ -7652,7 +7559,7 @@ class Virus extends Player {
 
                             if($_SESSION['MISSION_TYPE'] == '5'){
 
-                                require_once '/var/www/classes/Mission.class.php';
+                                require_once BASE_PATH . 'classes/Mission.class.php';
                                 $mission = new Mission();
 
                                 if($mission->missionVictim($_SESSION['MISSION_ID']) == $ip){
@@ -7729,12 +7636,12 @@ class Virus extends Player {
         $brief = 'Hacker <a href="profile?id='.$_SESSION['id'].'">'.$hackerInfo->login.'</a> managed to DDoS and seize the FBI suspect known as <a href="profile?id='.$victimInfo['0']['id'].'">'.$victimName.'</a>.<br/>
                 '.$hackerInfo->login.' received a total bounty of <font color="green">$<b>'.$formatedBounty.'</b></font> for doing this brave act.';
 
-        require '/var/www/classes/News.class.php';
+        require BASE_PATH . 'classes/News.class.php';
         $news = new News();
 
         $news->news_add(-2, $title, $brief, Array($_SESSION['id'], $bounty, ''));
 
-        require_once '/var/www/classes/Mail.class.php';
+        require_once BASE_PATH . 'classes/Mail.class.php';
         $mail = new Mail();
 
         $title = _('Congratulations.');
@@ -7988,13 +7895,13 @@ class Virus extends Player {
         
         if(!$mission->doom_haveMission($id)){
             
-            require '/var/www/classes/Clan.class.php';
-            require '/var/www/classes/Mail.class.php';
+            require BASE_PATH . 'classes/Clan.class.php';
+            require BASE_PATH . 'classes/Mail.class.php';
             
             $mail = new Mail();
             $finances = new Finances();
             
-            require '/var/www/classes/Storyline.class.php';
+            require BASE_PATH . 'classes/Storyline.class.php';
             $storyline = new Storyline();
             
             $user = parent::getPlayerInfo($id)->login;
@@ -8132,9 +8039,9 @@ class Virus extends Player {
         
         if($valid == 1){
 
-            require_once '/var/www/classes/Clan.class.php';
-            require '/var/www/classes/Storyline.class.php';
-            require '/var/www/classes/Social.class.php';
+            require_once BASE_PATH . 'classes/Clan.class.php';
+            require BASE_PATH . 'classes/Storyline.class.php';
+            require BASE_PATH . 'classes/Social.class.php';
             
             $storyline = new Storyline();
             $clan = new Clan();
@@ -8247,7 +8154,7 @@ class Virus extends Player {
                 $doomNewsText .= 'There are reasons to believe this attack is being supported by '.$evilCorp.'. ';
                 $doomNewsText .= 'NSA director is afraid that this is not the only doom virus since forensics team found more attack logs at their mainframe.';
 
-                require '/var/www/classes/News.class.php';
+                require BASE_PATH . 'classes/News.class.php';
                 $news = New News();
                 $news->news_add(-1, $doomNewsTitle, $doomNewsText, Array('ip', 'lol', '+6'));
                                 
@@ -8374,9 +8281,9 @@ class Virus extends Player {
                     VALUES ('".$doomID."', '".$_SESSION['id']."', NOW())";
             $this->pdo->query($sql);            
             
-            require '/var/www/classes/Social.class.php';
-            require '/var/www/classes/News.class.php';
-            require '/var/www/classes/Clan.class.php';
+            require BASE_PATH . 'classes/Social.class.php';
+            require BASE_PATH . 'classes/News.class.php';
+            require BASE_PATH . 'classes/Clan.class.php';
             
             $social = new Social();
             $news = New News();
@@ -8444,7 +8351,7 @@ class Virus extends Player {
             
             $news->news_add(-1, $disableNewsTitle, $disableNewsContent, Array($_SESSION['id'], $reward, ''));
             
-            require_once '/var/www/classes/Mission.class.php';
+            require_once BASE_PATH . 'classes/Mission.class.php';
             $mission = new Mission();
 
             if($mission->playerOnMission($idToDisable)){
@@ -8500,7 +8407,7 @@ class Virus extends Player {
     
     public function DDoS_consequences($ddosPower, $ddoserIP, $victimIP, $seizedFBI){
         
-        require_once '/var/www/classes/Storyline.class.php';
+        require_once BASE_PATH . 'classes/Storyline.class.php';
         $storyline = new Storyline();
 
         if($storyline->fbi_isset($victimIP) || $seizedFBI){
@@ -8577,9 +8484,9 @@ class Virus extends Player {
         
         $this->session->newQuery();
         $sql = "SELECT id FROM software_texts WHERE userID = ".$_SESSION['id']." AND isNPC = 0 AND ddos = 1";
-        $data = $this->pdo->query($sql);
+        $data = $this->pdo->query($sql)->fetchAll();
         
-        while($textInfo = $data->fetch(PDO::FETCH_OBJ)){
+        foreach ($data as $_row) { $textInfo = (object)$_row;
             
             $this->session->newQuery();
             $sql = "DELETE FROM software_texts WHERE id = ".$textInfo->id;

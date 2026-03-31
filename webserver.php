@@ -1,6 +1,7 @@
 <?php
+require_once __DIR__ . "/config.php";
 
-require '/var/www/classes/Session.class.php';
+require BASE_PATH . 'classes/Session.class.php';
 
 $session = new Session();
 
@@ -8,10 +9,10 @@ if($session->issetLogin()){
 
     if($_SERVER['REQUEST_METHOD'] == 'POST'){
         
-        require '/var/www/classes/Player.class.php';
-        require '/var/www/classes/PC.class.php';
-        require '/var/www/classes/Internet.class.php';
-        require '/var/www/classes/Process.class.php';
+        require BASE_PATH . 'classes/Player.class.php';
+        require BASE_PATH . 'classes/PC.class.php';
+        require BASE_PATH . 'classes/Internet.class.php';
+        require BASE_PATH . 'classes/Process.class.php';
         
         $player = new Player();
         $internet = new Internet();
@@ -38,7 +39,7 @@ if($session->issetLogin()){
                 die("<br/><strong>Invalid web server text</strong>");
             }
             
-            require '/var/www/classes/Purifier.class.php';
+            require BASE_PATH . 'classes/Purifier.class.php';
             $purifier = new Purifier();
             $purifier->set_config('text');
 

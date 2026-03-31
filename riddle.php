@@ -1,8 +1,9 @@
 <?php
+require_once __DIR__ . "/config.php";
 
 session_start();
 
-require '/var/www/classes/Session.class.php';
+require BASE_PATH . 'classes/Session.class.php';
 $session = new Session();
 
 $result = Array();
@@ -10,7 +11,7 @@ $result['status'] = 'ERROR';
 $result['redirect'] = '';
 $result['msg'] = 'STOP SPYING ON ME!';
 
-require '/var/www/classes/Riddle.class.php';
+require BASE_PATH . 'classes/Riddle.class.php';
 $riddle = new Riddle();
 
 if(!$session->issetInternetSession()){

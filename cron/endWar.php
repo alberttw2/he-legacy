@@ -1,11 +1,12 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 
 //TODO: e se empatar?
 
 
 $start = microtime(true);
 
-require '/var/www/classes/PDO.class.php';
+require_once BASE_PATH . 'classes/PDO.class.php';
 
 $pdo = PDO_DB::factory();
 
@@ -97,14 +98,18 @@ if(sizeof($data) > 0){
                 $mostInfluentID = $ddoserArr[$k]['userID'];
             }
                         
-            $sql = "SELECT bankAcc FROM bankAccounts WHERE bankUser = '".$ddoserArr[$k]['userID']."' ORDER BY cash ASC LIMIT 1";
-            $bankInfo = $pdo->query($sql)->fetchAll();
+            $sql = "SELECT bankAcc FROM bankAccounts WHERE bankUser = :uid ORDER BY cash ASC LIMIT 1";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array(':uid' => $ddoserArr[$k]['userID']));
+            $bankInfo = $stmt->fetchAll();
             
-            $sql = "UPDATE bankAccounts SET cash = cash + '".$earned."' WHERE bankAcc = '".$bankInfo['0']['bankacc']."'";
-            $pdo->query($sql);
+            $sql = "UPDATE bankAccounts SET cash = cash + :earned WHERE bankAcc = :bankAcc";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array(':earned' => $earned, ':bankAcc' => $bankInfo['0']['bankacc']));
             
-            $sql = "UPDATE users_stats SET moneyEarned = moneyEarned + '".$earned."' WHERE uid = '".$ddoserArr[$k]['userID']."'";
-            $pdo->query($sql);
+            $sql = "UPDATE users_stats SET moneyEarned = moneyEarned + :earned WHERE uid = :uid";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array(':earned' => $earned, ':uid' => $ddoserArr[$k]['userID']));
             
             $split++;
             
@@ -112,8 +117,10 @@ if(sizeof($data) > 0){
         
         
 
-        $sql = "SELECT login FROM users WHERE id = '".$mostInfluentID."'";
-        $playerName = $pdo->query($sql)->fetch(PDO::FETCH_OBJ)->login;
+        $sql = "SELECT login FROM users WHERE id = :uid";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':uid' => $mostInfluentID));
+        $playerName = $stmt->fetch(PDO::FETCH_OBJ)->login;
         
         $title = $winnerName.' won clan battle against '.$loserName;
         
@@ -136,21 +143,25 @@ if(sizeof($data) > 0){
                 ";
         $pdo->query($sql);
         
-        $sql = "UPDATE clan_stats SET lost = lost + 1 WHERE cid = '".$loserID."'";
-        $pdo->query($sql);
+        $sql = "UPDATE clan_stats SET lost = lost + 1 WHERE cid = :loserID";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':loserID' => $loserID));
 
         
-        $sql = "DELETE FROM clan_war WHERE (clanID1 = '".$winnerID."' and clanID2 = '".$loserID."') OR (clanID2 = '".$winnerID."' and clanID1 = '".$loserID."')";
-        //$pdo->query($sql);
-        
+        $sql = "DELETE FROM clan_war WHERE (clanID1 = :w1 and clanID2 = :l1) OR (clanID2 = :w2 and clanID1 = :l2)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':w1' => $winnerID, ':l1' => $loserID, ':w2' => $winnerID, ':l2' => $loserID));
+
         //Add to clan war history
         $sql = "INSERT INTO clan_war_history (id, idWinner, idLoser, scoreWinner, scoreLoser, startDate, endDate, bounty)
                 VALUES ('', '".$winnerID."', '".$loserID."', '".$winnerScore."', '".$loserScore."', '".$startDate."', NOW(), '".$bounty."')";
         $pdo->query($sql);
         $warID = $pdo->lastInsertId();
         
-        $sql = "SELECT attackerClan, victimClan, ddosID FROM clan_ddos WHERE (attackerClan = '".$winnerID."' AND victimClan = '".$loserID."') OR (attackerClan = '".$loserID."' AND victimClan = '".$winnerID."')";
-        $data2 = $pdo->query($sql)->fetchAll();
+        $sql = "SELECT attackerClan, victimClan, ddosID FROM clan_ddos WHERE (attackerClan = :w1 AND victimClan = :l1) OR (attackerClan = :l2 AND victimClan = :w2)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':w1' => $winnerID, ':l1' => $loserID, ':l2' => $loserID, ':w2' => $winnerID));
+        $data2 = $stmt->fetchAll();
         
         if(sizeof($data2) > 0){
             
@@ -164,8 +175,9 @@ if(sizeof($data) > 0){
             
         }
         
-        $sql = "DELETE FROM clan_ddos WHERE (attackerClan = '".$winnerID."' AND victimClan = '".$loserID."') OR (attackerClan = '".$loserID."' AND victimClan = '".$winnerID."')";
-        //$pdo->query($sql);        
+        $sql = "DELETE FROM clan_ddos WHERE (attackerClan = :w1 AND victimClan = :l1) OR (attackerClan = :l2 AND victimClan = :w2)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':w1' => $winnerID, ':l1' => $loserID, ':l2' => $loserID, ':w2' => $winnerID));
 
     }
         

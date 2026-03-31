@@ -13,9 +13,9 @@ Class Pagination {
  
    function __construct() {
 
-        require_once '/var/www/classes/System.class.php';
-        require_once '/var/www/classes/Player.class.php';
-        require_once '/var/www/classes/PC.class.php';
+        require_once BASE_PATH . 'classes/System.class.php';
+        require_once BASE_PATH . 'classes/Player.class.php';
+        require_once BASE_PATH . 'classes/PC.class.php';
 
         $this->pdo = PDO_DB::factory();
         $this->system = new System();
@@ -245,13 +245,7 @@ Class Pagination {
                         }
                         
                         if($showInfo->spec_net != FALSE){
-                            $net = $showInfo->spec_net;
-                            if($net == 1000){
-                                $net /= 1000;
-                                $net .= ' Gbit/s';
-                            } else {
-                                $net .= ' Mbit/s';
-                            }
+                            $net = HardwareFormat::net($showInfo->spec_net);
                         }
 
                         if($showInfo->pass == 'unknown' || $showInfo->pass == 'exploited'){
@@ -334,7 +328,12 @@ Class Pagination {
                     <?php
      
                 } else {
-                    echo _('You do not have any IPs on your Hacked Database.');
+                    ?>
+                    <div class="alert alert-info">
+                        <strong><?php echo _('Your hacked database is empty.'); ?></strong>
+                        <?php echo _('Navigate to a server via Internet, crack the password, and login to add it to your database.'); ?>
+                    </div>
+                    <?php
                 }
 
                 break;
@@ -349,7 +348,7 @@ Class Pagination {
                 
                 $this->session->newQuery();
                 $sql = "SELECT id, mails.from, subject, dateSent, isRead FROM mails WHERE mails.to = $id AND isDeleted = 0 ORDER BY dateSent DESC LIMIT $queryLimit";
-                $data = $this->pdo->query($sql);
+                $data = $this->pdo->query($sql)->fetchAll();
 
                 ?>
                 
@@ -377,7 +376,7 @@ Class Pagination {
                             <tbody>
                 <?php                         
 
-                while ($mailInfo = $data->fetch(PDO::FETCH_OBJ)) {
+                foreach($data as $_row){ $mailInfo = (object)$_row;
 
                     $date = substr($mailInfo->datesent, 0, -3);
                     $subject = '<a href="mail?id='.$mailInfo->id.'">'._($mailInfo->subject).'</a>';
@@ -446,7 +445,7 @@ Class Pagination {
                 
                 $this->session->newQuery();
                 $sql = "SELECT id, mails.to, subject, dateSent, isRead FROM mails WHERE mails.from = $id ORDER BY dateSent DESC LIMIT $queryLimit";
-                $data = $this->pdo->query($sql);
+                $data = $this->pdo->query($sql)->fetchAll();
 
                 ?>
                 
@@ -473,10 +472,10 @@ Class Pagination {
                                 
                 <?php                  
 
-                while ($mailInfo = $data->fetch(PDO::FETCH_OBJ)) {
+                foreach($data as $_row){ $mailInfo = (object)$_row;
 
                     $date = substr($mailInfo->datesent, 0, -3);
-                    $subject = '<a href="mail?id='.$mailInfo->id.'">'.$mailInfo->subject.'</a>';                    
+                    $subject = '<a href="mail?id='.$mailInfo->id.'">'.$mailInfo->subject.'</a>';
                     $name = '<a href="profile?id='.$mailInfo->to.'">'.$this->player->getPlayerInfo($mailInfo->to)->login.'</a>';
 
                     ?>
@@ -545,7 +544,7 @@ Class Pagination {
                         WHERE userID = $id AND completed = 1
                         ORDER BY missionEnd DESC 
                         LIMIT $queryLimit";
-                $data = $this->pdo->query($sql);
+                $data = $this->pdo->query($sql)->fetchAll();
 
 ?>
                                             <table class="table table-cozy table-bordered table-striped">
@@ -558,9 +557,9 @@ Class Pagination {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-<?php                  
+<?php
 
-                while ($missionInfo = $data->fetch(PDO::FETCH_OBJ)) {
+                foreach($data as $_row){ $missionInfo = (object)$_row;
 
                     $hirerText = '<a href="internet?ip='.long2ip($missionInfo->hirer).'">'.$missionInfo->hirername.'</a>';
                     $missionText = $mission->missionText($missionInfo->type);
@@ -855,7 +854,7 @@ Class Pagination {
                                     <tbody>            
 <?php                    
                 
-require 'html/ranking/user_'.$pageToLoad.'.html';
+if (file_exists('html/ranking/user_'.$pageToLoad.'.html')) { require 'html/ranking/user_'.$pageToLoad.'.html'; }
 
 ?>
                                     </tbody>
@@ -896,7 +895,7 @@ require 'html/ranking/user_'.$pageToLoad.'.html';
                                     <tbody>                            
 <?php                    
                 
-require 'html/ranking/clan_'.$pageToLoad.'.html';
+if (file_exists('html/ranking/clan_'.$pageToLoad.'.html')) { require 'html/ranking/clan_'.$pageToLoad.'.html'; }
 
 ?>
                                     </tbody>
@@ -965,7 +964,7 @@ require 'html/ranking/clan_'.$pageToLoad.'.html';
                         $this->system->handleError('Invalid page.', 'ranking?show=software');
                     }
                     
-                    require 'html/ranking/soft_'.$pageToLoad.'.html';
+                    if (file_exists('html/ranking/soft_'.$pageToLoad.'.html')) { require 'html/ranking/soft_'.$pageToLoad.'.html'; }
                     
                 } else {
          
@@ -1046,7 +1045,7 @@ require 'html/ranking/clan_'.$pageToLoad.'.html';
                                     <tbody>                            
 <?php                
 
-                require 'html/ranking/ddos_'.$pageToLoad.'.html';
+                if (file_exists('html/ranking/ddos_'.$pageToLoad.'.html')) { require 'html/ranking/ddos_'.$pageToLoad.'.html'; }
 
 ?>
                                     </tbody>
@@ -1192,7 +1191,8 @@ foreach($th as $thName){
                                     <tbody>                            
 <?php                
 
-                require 'html/fame/'.$round.'_'.$pathName.'_'. ($page - 1) .'.html';
+                $fameFile = 'html/fame/'.$round.'_'.$pathName.'_'. ($page - 1) .'.html';
+                if (file_exists($fameFile)) { require $fameFile; }
 
 ?>
                                     </tbody>
@@ -1204,7 +1204,7 @@ foreach($th as $thName){
                 break;
             case 'round':
 
-                require '/var/www/classes/Storyline.class.php';
+                require BASE_PATH . 'classes/Storyline.class.php';
                 $storyline = new Storyline();
 
                 $curRound = $storyline->round_current();

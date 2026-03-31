@@ -78,7 +78,7 @@ class TwitterOAuth {
     $request = $this->oAuthRequest($this->requestTokenURL(), 'GET', $parameters);
     $token = OAuthUtil::parse_parameters($request);
     
-    if(!empty($token)){
+    if(!empty($token) && isset($token['oauth_token']) && isset($token['oauth_token_secret'])){
         $this->token = new OAuthConsumer($token['oauth_token'], $token['oauth_token_secret']);
     }
     return $token;
@@ -137,7 +137,9 @@ class TwitterOAuth {
     $parameters['x_auth_mode'] = 'client_auth';
     $request = $this->oAuthRequest($this->accessTokenURL(), 'POST', $parameters);
     $token = OAuthUtil::parse_parameters($request);
-    $this->token = new OAuthConsumer($token['oauth_token'], $token['oauth_token_secret']);
+    if(isset($token['oauth_token']) && isset($token['oauth_token_secret'])){
+        $this->token = new OAuthConsumer($token['oauth_token'], $token['oauth_token_secret']);
+    }
     return $token;
   }
 

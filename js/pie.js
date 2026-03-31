@@ -295,10 +295,14 @@ var EasyPieChart = function(el, opts) {
 };
 
 
-    var element = document.querySelector('.chartpie');
-    new EasyPieChart(element, {
-        animate:2000,
-        onStep: function(from, to, percent) {
-          document.getElementById('percentpie').innerHTML = Math.round(percent);
-        }
+    document.querySelectorAll('.chartpie, .easyPieChart').forEach(function(element) {
+        if (!element || element.dataset.initialized) return;
+        element.dataset.initialized = '1';
+        var percentEl = element.querySelector('#percentpie, .percent-text');
+        new EasyPieChart(element, {
+            animate: 2000,
+            onStep: function(from, to, percent) {
+                if (percentEl) percentEl.innerHTML = Math.round(percent);
+            }
+        });
     });

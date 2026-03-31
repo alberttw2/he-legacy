@@ -1,6 +1,6 @@
 <?php
 
-require_once '/var/www/classes/Player.class.php';
+require_once BASE_PATH . 'classes/Player.class.php';
 
 class News {
 
@@ -91,8 +91,10 @@ class News {
     public function newsIsset($id){
         
         $this->session->newQuery();
-        $sql = "SELECT COUNT(*) AS total, author, title, content, date, type FROM news WHERE id = '".$id."' LIMIT 1";
-        $newsInfo = $this->pdo->query($sql)->fetch(PDO::FETCH_OBJ);
+        $sql = "SELECT COUNT(*) AS total, author, title, content, date, type FROM news WHERE id = :id LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':id' => $id));
+        $newsInfo = $stmt->fetch(PDO::FETCH_OBJ);
 
         if($newsInfo->total == 0){
             
@@ -141,7 +143,7 @@ class News {
         
         $this->authorIP = self::getAuthorIP();
         
-        require '/var/www/classes/Purifier.class.php';
+        require BASE_PATH . 'classes/Purifier.class.php';
         $purifier = new Purifier();
         $purifier->set_config('news');
 
@@ -272,7 +274,7 @@ self::getAuthorSpecifics();
                 
                 if(sizeof($newsHistory > 0)){
 
-                    require '/var/www/classes/Clan.class.php';
+                    require BASE_PATH . 'classes/Clan.class.php';
                     $clan = new Clan();
                     
                     if(!$clan->issetClan($newsHistory['0']['info1'])){
@@ -318,8 +320,10 @@ self::getAuthorSpecifics();
     private function news_history(){
         
         $this->session->newQuery();
-        $sql = "SELECT infoDate, info1, info2 FROM news_history WHERE newsID = '".$this->id."' LIMIT 1";
-        return $this->pdo->query($sql)->fetchAll();  
+        $sql = "SELECT infoDate, info1, info2 FROM news_history WHERE newsID = :newsID LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':newsID' => $this->id));
+        return $stmt->fetchAll();
         
     }
     
@@ -327,7 +331,7 @@ self::getAuthorSpecifics();
                 
         if(self::totalNews() > 0){
 
-            require_once '/var/www/classes/Pagination.class.php';
+            require_once BASE_PATH . 'classes/Pagination.class.php';
             $pagination = new Pagination();
 
             $pagination->paginate($_SESSION['id'], 'news', '15', 'page', '1', '0');
@@ -344,8 +348,11 @@ self::getAuthorSpecifics();
     public function listIndex($total){
 
                 $this->session->newQuery();
-                $sqlQuery = "SELECT id, title, date FROM news ORDER BY date DESC LIMIT $total";
-                $newsInfo = $this->pdo->query($sqlQuery)->fetchAll();
+                $sqlQuery = "SELECT id, title, date FROM news ORDER BY date DESC LIMIT :total";
+                $stmt = $this->pdo->prepare($sqlQuery);
+                $stmt->bindValue(':total', (int)$total, PDO::PARAM_INT);
+                $stmt->execute();
+                $newsInfo = $stmt->fetchAll();
 
 
 ?>
@@ -380,9 +387,10 @@ self::getAuthorSpecifics();
         $data->execute(array(':author' => $author, ':title' => $title, ':content' => $content));
 
         $this->session->newQuery();
-        $sql = "INSERT INTO news_history (newsID, info1, info2, infoDate) 
-                VALUES ('".$this->pdo->lastInsertId()."', '".$infoArray[0]."', '".$infoArray[1]."', '".$infoArray[2]."')";
-        $this->pdo->query($sql);
+        $sql = "INSERT INTO news_history (newsID, info1, info2, infoDate)
+                VALUES (:newsID, :info1, :info2, :infoDate)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':newsID' => $this->pdo->lastInsertId(), ':info1' => $infoArray[0], ':info2' => $infoArray[1], ':infoDate' => $infoArray[2]));
         
     }
     

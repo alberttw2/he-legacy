@@ -1,6 +1,6 @@
 <?php
 
-require '/var/www/classes/PDO.class.php';
+require_once BASE_PATH . 'classes/PDO.class.php';
 
 class Session {
 
@@ -54,7 +54,7 @@ class Session {
 
     public function returnMsg($prv = '') {
 
-        if($_SESSION['MSG_TYPE'] == 'error'){
+        if(($_SESSION['MSG_TYPE'] ?? '') == 'error'){
             $type = 'error';
             $prvMsg = '<strong>'._('Error').'!</strong> ';
         } else {
@@ -69,11 +69,11 @@ class Session {
 ?>
             <div class="alert alert-<?php echo $type; ?>">
                 <button class="close" data-dismiss="alert">×</button>
-                <?php echo $prvMsg.$_SESSION['MSG']; ?>
+                <?php echo $prvMsg.($_SESSION['MSG'] ?? ''); ?>
             </div>
 <?php
 
-        if($_SESSION['MSG_TYPE'] == 'mission'){
+        if(($_SESSION['MSG_TYPE'] ?? '') == 'mission'){
 ?>
             <span id="notify-mission"></span>
 <?php
@@ -162,23 +162,28 @@ if (ini_get("session.use_cookies")) {
     }
 
     public function validLogin(){
-        
+
         if(!isset($_SESSION)){
             return FALSE;
         }
-        
-        $pdo = PDO_DB::factory();
 
-        self::newQuery();
-        $sql = 'SELECT COUNT(*) AS t FROM users_online WHERE id = \''.$_SESSION['id'].'\' LIMIT 1';
-        $total = $pdo->query($sql)->fetch(PDO::FETCH_OBJ)->t;
+        try {
+            $pdo = PDO_DB::factory();
+
+            self::newQuery();
+            $sql = 'SELECT COUNT(*) AS t FROM users_online WHERE id = \''.$_SESSION['id'].'\' LIMIT 1';
+            $result = $pdo->query($sql)->fetch(PDO::FETCH_OBJ);
+            $total = $result ? $result->t : 0;
+        } catch (Exception $e) {
+            return FALSE;
+        }
 
         if($total == 1){
             return TRUE;
         }
-        
+
         return FALSE;
-        
+
     }
     
     public function issetProcessSession() {
@@ -424,7 +429,7 @@ if (ini_get("session.use_cookies")) {
             case 'LOGIN':
                 return 1;  // 2019: This ended up being a really bad idea
             case 'EDIT_LOG':
-                if($info[0] == '1'){
+                if($info[0] === '1'){
                     return 1; //local
                 } else {
                     return 3; //remote
@@ -545,25 +550,40 @@ if (ini_get("session.use_cookies")) {
     }
     
     public function language_set($setSession = false){
-        
+
         if($setSession){
             $_SESSION['language'] = self::language_set();
         }
-        
-        if(!isset($_SERVER['HTTP_HOST'])){
-            return 'en_US';
+
+        $supported = ['en_US', 'pt_BR'];
+
+        // 1. Check ?lang= parameter
+        if(isset($_GET['lang'])){
+            $map = ['en' => 'en_US', 'pt' => 'pt_BR', 'br' => 'pt_BR'];
+            $lang = $map[$_GET['lang']] ?? null;
+            if($lang && in_array($lang, $supported)){
+                setcookie('he_lang', $lang, time() + 86400 * 365, '/');
+                $_SESSION['language'] = $lang;
+                return $lang;
+            }
         }
-        
-        if($_SERVER['HTTP_HOST'] == 'hackerexperience.com' || $_SERVER['HTTP_HOST'] == 'www.hackerexperience.com'){
-            return 'en_US';
+
+        // 2. Check cookie
+        if(isset($_COOKIE['he_lang']) && in_array($_COOKIE['he_lang'], $supported)){
+            return $_COOKIE['he_lang'];
         }
-        
-        if($_SERVER['HTTP_HOST'] == 'br.hackerexperience.com' || $_SERVER['HTTP_HOST'] == 'www.br.hackerexperience.com'){
-            return 'pt_BR';
+
+        // 3. Check subdomain (legacy support)
+        if(isset($_SERVER['HTTP_HOST'])){
+            global $gameDomain;
+            if(strpos($_SERVER['HTTP_HOST'], 'br.') === 0){
+                return 'pt_BR';
+            }
         }
-        
-        return 'en_US';        
-        
+
+        // 4. Default
+        return 'en_US';
+
     }
     
     public function language_get(){
@@ -578,44 +598,45 @@ if (ini_get("session.use_cookies")) {
     }
     
     public function help($page, $info = false){
-        
+
         $ext = '';
-        
+        $wikiBase = $GLOBALS['wikiPath'];
+
         switch($page){
             case 'clan':
-                return 'https://wiki.hackerexperience.com/'._('en').':clans';
+                return $wikiBase._('en').':clans';
             case 'missions':
                 if($info == 'level'){
                     $ext = _('#mission_level');
                 }
-                return 'https://wiki.hackerexperience.com/'._('en').':missions'.$ext;
+                return $wikiBase._('en').':missions'.$ext;
             case 'hardware':
-                return 'https://wiki.hackerexperience.com/'._('en').':hardware';
+                return $wikiBase._('en').':hardware';
             case 'log':
-                return 'https://wiki.hackerexperience.com/'._('en').':log';
+                return $wikiBase._('en').':log';
             case 'university':
-                return 'https://wiki.hackerexperience.com/'._('en').':university';
+                return $wikiBase._('en').':university';
             case 'finances':
-                return 'https://wiki.hackerexperience.com/'._('en').':finances';
+                return $wikiBase._('en').':finances';
             case 'list':
                 if($info == 'ddos'){
-                    return 'https://wiki.hackerexperience.com/'._('en').':ddos';
+                    return $wikiBase._('en').':ddos';
                 } elseif($info == 'collect'){
-                    return 'https://wiki.hackerexperience.com/'._('en').':hacked_database';
+                    return $wikiBase._('en').':hacked_database';
                 }
-                return 'https://wiki.hackerexperience.com/'._('en').':hacked_database';
+                return $wikiBase._('en').':hacked_database';
             case 'task':
-                return 'https://wiki.hackerexperience.com/'._('en').':processes';
+                return $wikiBase._('en').':processes';
             case 'software':
                 if($info == 'external'){
-                    return 'https://wiki.hackerexperience.com/'._('en').':hardware'._('#external_hard_drive');
+                    return $wikiBase._('en').':hardware'._('#external_hard_drive');
                 }
-                return 'https://wiki.hackerexperience.com/'._('en').':softwares';
+                return $wikiBase._('en').':softwares';
             case 'internet':
                 if($info == 'hack'){
-                    return 'https://wiki.hackerexperience.com/'._('en').':hacking';
+                    return $wikiBase._('en').':hacking';
                 }
-                return 'https://wiki.hackerexperience.com/'._('en').':internet';
+                return $wikiBase._('en').':internet';
                 
         }
         

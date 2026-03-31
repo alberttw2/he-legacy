@@ -1,8 +1,8 @@
 <?php
 
 require 'config.php';
-require '/var/www/classes/Session.class.php';
-require '/var/www/classes/System.class.php';
+require BASE_PATH . 'classes/Session.class.php';
+require BASE_PATH . 'classes/System.class.php';
 
 
 
@@ -11,7 +11,7 @@ $loadFacebook = FALSE;
 $loadTwitter = FALSE;
 $remembered = FALSE;
 
-require '/var/www/classes/Facebook.class.php';
+require BASE_PATH . 'classes/Facebook.class.php';
 
 if(isset($_COOKIE['PHPSESSID'])){
     $session = new Session();
@@ -28,31 +28,11 @@ if(!isset($_SESSION['id'])){
     
     if($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['code']) || isset($_SESSION['FBLOGIN'])){
                 
-        $fbServerURL = 'http://hackerexperience.com/';
+        $fbServerURL = $gameDomainProto . '/';
 
-        if(isset($_SERVER['HTTP_HOST'])){
-            if($_SERVER['HTTP_HOST'] == 'br.hackerexperience.com'){
-                $fbServerURL = 'http://br.hackerexperience.com/';
-            } elseif($_SERVER['HTTP_HOST'] == 'en.hackerexperience.com'){
-                $fbServerURL = 'http://en.hackerexperience.com/';
-            }
-        }
-        
-        // 2019: Update the links, the appId and the appSecret below in order to enable FB login
-        switch($fbServerURL){
-            case 'http://hackerexperience.com/':
-                $appID = 0;
-                $appSecret = 'REDACTED';
-                break;
-            case 'http://br.hackerexperience.com/':
-                $appID = 0;
-                $appSecret = 'REDACTED';
-                break;
-            case 'http://en.hackerexperience.com/':
-                $appID = 0;
-                $appSecret = 'REDACTED';
-                break;
-        }
+        // 2019: Update the appId and the appSecret below in order to enable FB login
+        $appID = 0;
+        $appSecret = 'REDACTED';
                 
         $facebook = new Facebook(array(
             'appId' => $appID,
@@ -81,11 +61,13 @@ if(!isset($_SESSION['id'])){
         if($user){
 
             $sql = 'SELECT COUNT(*) AS total, users.login
-                    FROM users_facebook 
+                    FROM users_facebook
                     LEFT JOIN users
                     ON users.id = users_facebook.gameID
-                    WHERE userID = '.$user;
-            $fbInfo = $pdo->query($sql)->fetch(PDO::FETCH_OBJ);
+                    WHERE userID = :user';
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array(':user' => $user));
+            $fbInfo = $stmt->fetch(PDO::FETCH_OBJ);
             
             if($fbInfo->total == 0){
                 //first login. need to determine one username and then use the usercreate function
@@ -94,7 +76,7 @@ if(!isset($_SESSION['id'])){
                 $_SESSION['SPECIAL_ID'] = 'fb';
             } else {
 
-                require '/var/www/classes/Database.class.php';
+                require BASE_PATH . 'classes/Database.class.php';
                 $database = new LRSys();
                 
                 $database->login($fbInfo->login, '0', 'facebook');
@@ -157,13 +139,15 @@ if(!isset($_SESSION['id'])){
         
         $pdo = PDO_DB::factory();
         
-        $_SESSION['QUERY_COUNT'] += 1;
+        $_SESSION['QUERY_COUNT'] = ($_SESSION['QUERY_COUNT'] ?? 0) + 1;
         $sql = 'SELECT COUNT(*) AS total, users.login
-                FROM users_twitter 
+                FROM users_twitter
                 LEFT JOIN users
                 ON users.id = users_twitter.gameID
-                WHERE userID = '.$user_info->id;
-        $ttInfo = $pdo->query($sql)->fetch(PDO::FETCH_OBJ);
+                WHERE userID = :uid';
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array(':uid' => $user_info->id));
+        $ttInfo = $stmt->fetch(PDO::FETCH_OBJ);
         
         if($ttInfo->total == 0){
             //first login. need to determine one username and then use the usercreate function
@@ -172,7 +156,7 @@ if(!isset($_SESSION['id'])){
             $_SESSION['SPECIAL_ID'] = 'tt';
         } else {
             
-            require '/var/www/classes/Database.class.php';
+            require BASE_PATH . 'classes/Database.class.php';
             $database = new LRSys();
 
             $database->login($ttInfo->login, '0', 'twitter');
@@ -187,9 +171,9 @@ if(!isset($_SESSION['id'])){
         
         // 2019: User is not doing any type of social login, so I'll check if it's logged in the database (remember me feature)
         //não está fazendo nenhum tipo de social login, vou verificar se está logado no banco (remember me)
-        require '/var/www/classes/RememberMe.class.php';
+        require BASE_PATH . 'classes/RememberMe.class.php';
         
-        $key = pack("H*", 'REDACTED');
+        $key = pack("H*", '0119f6622019e762340d24715beffc525623dc2406ff4930891b8308ef7f3446');
         
         
         $remember = new RememberMe($key, PDO_DB::factory());
@@ -215,7 +199,7 @@ if($loadFacebook){
     
     $session = new Session();
     
-    if(!$remembered) require_once '/var/www/classes/Player.class.php';
+    if(!$remembered) require_once BASE_PATH . 'classes/Player.class.php';
     $player = new Player($_SESSION['id']);
 
     if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST)){
@@ -230,7 +214,7 @@ if($loadFacebook){
         $session->returnMsg();
     }
     
-    if($_SESSION['ROUND_STATUS'] == 1){
+    if(($_SESSION['ROUND_STATUS'] ?? 0) == 1){
 
         $player->showIndex();
 
@@ -244,7 +228,7 @@ if($loadFacebook){
 
 } else {
     
-    if(isset($_SESSION)) unset($_SESSION['GOING_ON']);
+    if(isset($_SESSION) && isset($_SESSION['GOING_ON'])) unset($_SESSION['GOING_ON']);
     
     if(isset($_SESSION['SPECIAL_ID'])){
         if($_SESSION['SPECIAL_ID'] == 'fb'){

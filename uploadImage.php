@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/config.php";
 
 // 2019: This contains a bug that allows RCE via EXIF headers. 
 // 2019: Consider rolling your own, secure image upload solution
@@ -21,7 +22,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
         if(getimagesize($_FILES['image_upload']['tmp_name']) !== FALSE){
 
-            require_once '/var/www/classes/PDO.class.php';
+            require_once BASE_PATH . 'classes/PDO.class.php';
             $pdo = PDO_DB::factory();
 
             if(!isset($_POST['t'])){
@@ -45,8 +46,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
                 $redirect = 'profile.php';
                 $dir3 = 'images/profile/x60/';
 
-                $sql = "SELECT login FROM users WHERE id = '".$_SESSION['id']."' LIMIT 1";
-                $data = $pdo->query($sql)->fetchAll();
+                $sql = "SELECT login FROM users WHERE id = :uid LIMIT 1";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(array(':uid' => $_SESSION['id']));
+                $data = $stmt->fetchAll();
 
                 if(count($data) == 1){
 
@@ -63,15 +66,19 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
                 $dir2 = '';
                 $redirect = 'clan.php';
 
-                $sql = "SELECT clanID FROM clan_users WHERE userID = '".$_SESSION['id']."' LIMIT 1";
-                $data = $pdo->query($sql)->fetchAll();
+                $sql = "SELECT clanID FROM clan_users WHERE userID = :uid LIMIT 1";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(array(':uid' => $_SESSION['id']));
+                $data = $stmt->fetchAll();
 
                 if(count($data) == 1){
 
                     $cid = $data['0']['clanid'];
                     
-                    $sql = "SELECT name FROM clan WHERE clanID = '".$cid."'";
-                    $data = $pdo->query($sql)->fetchAll();
+                    $sql = "SELECT name FROM clan WHERE clanID = :cid";
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute(array(':cid' => $cid));
+                    $data = $stmt->fetchAll();
 
                     $filename = md5($data['0']['name'].$cid);
 
@@ -81,7 +88,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
                 
             }
 //
-//            require '/var/www/classes/Images.class.php';
+//            require BASE_PATH . 'classes/Images.class.php';
 //            $images = new Images();
 //
 //            $images->load($_FILES['image_upload']['tmp_name']);
@@ -130,13 +137,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
             
             $imagick = new Imagick($tmpFile);
             autoRotateImage($imagick);
-            $imagick->writeImage('/var/www/'.$dir.$filename.'.jpg'); 
+            $imagick->writeImage(BASE_PATH . $dir.$filename.'.jpg'); 
 
             if($dir2 != ''){
                 
-                $imagick = new Imagick('/var/www/'.$dir.$filename.'.jpg');
+                $imagick = new Imagick(BASE_PATH . $dir.$filename.'.jpg');
                 $imagick->cropthumbnailimage(60, 60);
-                $imagick->writeImage('/var/www/'.$dir2.$filename.'.jpg');
+                $imagick->writeImage(BASE_PATH . $dir2.$filename.'.jpg');
 
             }
                         

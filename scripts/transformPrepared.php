@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 
 if(isset($_POST['sql'])){
     
@@ -233,7 +234,7 @@ if(isset($_POST['sql'])){
             <option value="6">return fetch object</option>
 
         </select>
-        Nome $query: $<input type="text" name="queryvar" size="40" value="<?php echo $_POST['queryvar']; ?>">
+        Nome $query: $<input type="text" name="queryvar" size="40" value="<?php echo htmlspecialchars($_POST['queryvar'], ENT_QUOTES, 'UTF-8'); ?>">
         <br/>
         Tipo: <br/>
         $this->pdo-><input type="radio" name="type" value="1" <?php echo $checkType1; ?>><br/>

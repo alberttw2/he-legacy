@@ -1,6 +1,7 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 
-require '/var/www/ses/aws-autoloader.php';
+require BASE_PATH . 'ses/aws-autoloader.php';
 
 use Aws\S3\S3Client;
 

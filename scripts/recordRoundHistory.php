@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__) . '/config.php';
 die("ACHO QUE NAO USO ISSO!");
 function getExtension($softType) {
 
@@ -64,7 +65,7 @@ function getExtension($softType) {
 
  }
 
-require '/var/www/classes/PDO.class.php';
+require_once BASE_PATH . 'classes/PDO.class.php';
 
 $pdo = PDO_DB::factory();
 
@@ -88,22 +89,26 @@ $sql = 'SELECT users.id, users.login, users_stats.exp, clan_users.clanID, timePl
         LEFT JOIN clan_users
         ON clan_users.userID = users.id
         ORDER BY users_stats.exp DESC';
-$data = $pdo->query($sql);
+$data = $pdo->query($sql)->fetchAll();
 
 $pos = 1;
 
-while($userInfo = $data->fetch(PDO::FETCH_OBJ)){
+foreach($data as $_row){ $userInfo = (object)$_row;
 
     if($userInfo->clanid != NULL){
-        $sql = "SELECT name FROM clan WHERE clanID = '".$userInfo->clanid."'";
-        $clanName = $pdo->query($sql)->fetch(PDO::FETCH_OBJ)->name;
+        $sql = "SELECT name FROM clan WHERE clanID = :clanID";
+        $stmtClan = $pdo->prepare($sql);
+        $stmtClan->execute(array(':clanID' => $userInfo->clanid));
+        $clanName = $stmtClan->fetch(PDO::FETCH_OBJ)->name;
     } else {
         $clanName = '';
     }
     
     //melhorar dps, precisa ser certificado por mim!
-    $sql = "SELECT softVersion, softName, softType FROM software WHERE userID = '".$userInfo->id."' AND isNPC = 0 AND softType < 30 ORDER BY softVersion DESC, softType DESC LIMIT 1";
-    $softInfo = $pdo->query($sql)->fetchAll();
+    $sql = "SELECT softVersion, softName, softType FROM software WHERE userID = :uid AND isNPC = 0 AND softType < 30 ORDER BY softVersion DESC, softType DESC LIMIT 1";
+    $stmtSoft = $pdo->prepare($sql);
+    $stmtSoft->execute(array(':uid' => $userInfo->id));
+    $softInfo = $stmtSoft->fetchAll();
     
     if(sizeof($softInfo) > 0){
         $bestSoft = $softInfo['0']['softname'].getExtension($softInfo['0']['softtype']);
@@ -114,9 +119,17 @@ while($userInfo = $data->fetch(PDO::FETCH_OBJ)){
     }
 
     $sql = "INSERT INTO hist_users (id, rank, userID, user, reputation, bestSoft, bestSoftVersion, clanName, round, timePlaying, hackCount, ddosCount, ipResets, moneyEarned, moneyTransfered, moneyHardware, moneyResearch, age)
-            VALUES ('', '".$pos."', '".$userInfo->id."', '".$userInfo->login."', '".$userInfo->exp."', '".$bestSoft."', '".$bestSoftVersion."', '".$clanName."', '".$curRound."', '".$userInfo->timeplaying."',
-                    '".$userInfo->hackcount."', '".$userInfo->ddoscount."', '".$userInfo->ipresets."', '".$userInfo->moneyearned."', '".$userInfo->moneytransfered."', '".$userInfo->moneyhardware."', '".$userInfo->moneyresearch."', '".$userInfo->age."')";
-    $pdo->query($sql);
+            VALUES ('', :pos, :uid, :login, :exp, :bestSoft, :bestSoftVersion, :clanName, :curRound, :timeplaying,
+                    :hackcount, :ddoscount, :ipresets, :moneyearned, :moneytransfered, :moneyhardware, :moneyresearch, :age)";
+    $stmtHist = $pdo->prepare($sql);
+    $stmtHist->execute(array(
+        ':pos' => $pos, ':uid' => $userInfo->id, ':login' => $userInfo->login, ':exp' => $userInfo->exp,
+        ':bestSoft' => $bestSoft, ':bestSoftVersion' => $bestSoftVersion, ':clanName' => $clanName,
+        ':curRound' => $curRound, ':timeplaying' => $userInfo->timeplaying, ':hackcount' => $userInfo->hackcount,
+        ':ddoscount' => $userInfo->ddoscount, ':ipresets' => $userInfo->ipresets, ':moneyearned' => $userInfo->moneyearned,
+        ':moneytransfered' => $userInfo->moneytransfered, ':moneyhardware' => $userInfo->moneyhardware,
+        ':moneyresearch' => $userInfo->moneyresearch, ':age' => $userInfo->age
+    ));
 
     $pos++;
     
@@ -134,15 +147,16 @@ $sql = 'SELECT clan.name, clan.nick, clan.slotsUsed, clan.power, clan_users.user
         ON clan_users.userID = users.id
         WHERE clan_users.authLevel = 4
         ORDER BY clan.power DESC';
-$data = $pdo->query($sql);
+$data = $pdo->query($sql)->fetchAll();
 
 $pos = 1;
 
-while($clanInfo = $data->fetch(PDO::FETCH_OBJ)){
+foreach($data as $_row){ $clanInfo = (object)$_row;
     
     $sql = "INSERT INTO hist_clans (id, rank, name, nick, reputation, owner, ownerID, members, round)
-            VALUES ('', '".$pos."', '".$clanInfo->name."', '".$clanInfo->nick."', '".$clanInfo->power."', '".$clanInfo->login."', '".$clanInfo->userid."', '".$clanInfo->slotsused."', '".$curRound."')";
-    $pdo->query($sql);
+            VALUES ('', :pos, :name, :nick, :power, :owner, :ownerID, :members, :curRound)";
+    $stmtClan = $pdo->prepare($sql);
+    $stmtClan->execute(array(':pos' => $pos, ':name' => $clanInfo->name, ':nick' => $clanInfo->nick, ':power' => $clanInfo->power, ':owner' => $clanInfo->login, ':ownerID' => $clanInfo->userid, ':members' => $clanInfo->slotsused, ':curRound' => $curRound));
     
     $pos++;
     
@@ -159,15 +173,16 @@ $sql = 'SELECT software.softName, software.softVersion, software.softType, softw
         WHERE software.isNPC = 0 AND softType < 29
         ORDER BY softVersion DESC, softType DESC
         LIMIT 100';
-$data = $pdo->query($sql);
+$data = $pdo->query($sql)->fetchAll();
 
 $pos = 1;
 
-while($softInfo = $data->fetch(PDO::FETCH_OBJ)){
+foreach($data as $_row){ $softInfo = (object)$_row;
     
     $sql = "INSERT INTO hist_software (id, rank, softName, softType, softVersion, owner, ownerID, round)
-            VALUES ('', '".$pos."', '".$softInfo->softname."', '".$softInfo->softtype."', '".$softInfo->softversion."', '".$softInfo->login."', '".$softInfo->userid."', '".$curRound."')";
-    $pdo->query($sql);
+            VALUES ('', :pos, :softName, :softType, :softVersion, :owner, :ownerID, :curRound)";
+    $stmtSoft2 = $pdo->prepare($sql);
+    $stmtSoft2->execute(array(':pos' => $pos, ':softName' => $softInfo->softname, ':softType' => $softInfo->softtype, ':softVersion' => $softInfo->softversion, ':owner' => $softInfo->login, ':ownerID' => $softInfo->userid, ':curRound' => $curRound));
     
     $pos++;
     

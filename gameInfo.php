@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/config.php";
 
 // 2019: I don't remember/think this is used...
 
