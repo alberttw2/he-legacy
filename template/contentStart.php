@@ -1255,7 +1255,7 @@ if($css['fa'] == 1){
             <ul>
                 <li<?php echo $menu['index']; ?>><a href="index"><i class="fa fa-inverse fa-home"></i> <span><?php echo _("Home"); ?></span></a></li>
                 <li<?php echo $menu['processes']; ?>><a href="processes"><i class="fa fa-inverse fa-tasks"></i> <span><?php echo _("Task Manager"); ?></span></a></li>
-                <li id="menu-software"<?php echo $menu['software']; ?>><a href="software"><i class="fa fa-inverse fa-folder-open"></i> <span><?php echo _("Software"); ?></span></a></li>
+                <li id="menu-software"<?php echo $menu['software']; ?>><a href="software"><i class="fa fa-inverse fa-desktop"></i> <span><?php echo _("My PC"); ?></span></a></li>
                 <li id="menu-internet"<?php echo $menu['internet']; ?>><a href="internet"><i class="fa fa-inverse fa-globe"></i> <span><?php echo _("Internet"); ?></span></a></li>
                 <li<?php echo $menu['log']; ?>><a href="log"><i class="fa fa-inverse fa-book"></i> <span><?php echo _("Log File"); ?></span></a></li>
                 <li<?php echo $menu['hardware']; ?>><a href="hardware"><i class="fa fa-inverse fa-desktop"></i> <span><?php echo _("Hardware"); ?></span></a></li>

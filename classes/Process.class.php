@@ -1394,6 +1394,16 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                     // 2019: Restrictions: must have hider; soft must not be seek; can't hide my best hider; hider can't be hidden
                     case 'HIDE': //restrições: preciso ter um hider, soft n pode estar seek, n posso hidear o melhor hider, hider n pode estar hide
 
+                        // Check newbie protection (players with < 1000 EXP can't have software hidden)
+                        if($this->pVictimID > 0){
+                            $victimExp = $this->pdo->prepare("SELECT exp FROM users_stats WHERE uid = ?");
+                            $victimExp->execute([$this->pVictimID]);
+                            $exp = (int)$victimExp->fetchColumn();
+                            if($exp < 1000){
+                                $error = 'This player is under newbie protection. You cannot hide their software.';
+                            }
+                        }
+
                         $softBest = $this->software->getBestSoftware('5', '', '', '1');
 
                         if($this->software->isInstalled($pSoftID, $id, $pcType) && $softInfo->softtype != 29){
@@ -2871,6 +2881,28 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                     
                     break;
                 case '10': //format
+
+                    // Delete all software owned by the user on the formatted server (keep hardware)
+                    $this->session->newQuery();
+                    $sql = "DELETE FROM software_running WHERE userID = '".$_SESSION['id']."'";
+                    $this->pdo->query($sql);
+
+                    $this->session->newQuery();
+                    $sql = "DELETE FROM software_texts WHERE userID = '".$_SESSION['id']."' AND isNPC = 0";
+                    $this->pdo->query($sql);
+
+                    $this->session->newQuery();
+                    $sql = "DELETE sf FROM software_folders sf INNER JOIN software s ON sf.folderID = s.id WHERE s.userID = '".$_SESSION['id']."' AND s.isNPC = 0";
+                    $this->pdo->query($sql);
+
+                    $this->session->newQuery();
+                    $sql = "DELETE FROM software WHERE userID = '".$_SESSION['id']."' AND isNPC = 0";
+                    $this->pdo->query($sql);
+
+                    $log->addLog($_SESSION['id'], $log->logText('FORMAT', Array(0)), '0');
+
+                    $this->session->addMsg('Hard drive formatted successfully.', 'notice');
+
                     break;
                 case '11': //hack bf
                     
@@ -3959,8 +3991,13 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                                 $accInfo = $this->finances->bankAccountInfo($this->pInfo);
                                 $bankIP = long2ip($this->finances->getBankIP($accInfo['0']['bankid']));
                             }
+                            // Remove from FBI
+                            $this->pdo->prepare("DELETE FROM fbi WHERE userID = ?")->execute([$_SESSION['id']]);
+                            // Remove from SafeNet
+                            $this->pdo->prepare("DELETE FROM safeNet WHERE userID = ?")->execute([$_SESSION['id']]);
+
                             $log->addLog($_SESSION['id'], $log->logText('IP_RESET', Array(0, $ipInfo['PRICE'], $this->pInfo, $bankIP)), 0);
-                            
+
                             $this->session->exp_add('RESET', Array('ip'));
                             
                         } else {
@@ -4074,10 +4111,14 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
 
                     break;
                 case '27': //DDoS
-                    
+
                     $virus = new Virus();
 
                     $virus->DDoS($victimIP);
+
+                    // Notify the DDoS victim
+                    require_once BASE_PATH . 'classes/Notification.class.php';
+                    Notification::send($this->pVictimID, 'attack', 'Your server is under DDoS attack!', 'processes');
 
                     $this->session->addMsg('DDoS successful. Report file generated.', 'notice');
 

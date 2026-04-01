@@ -2037,14 +2037,15 @@ class HardwareVPC extends Player {
         
         $totalPCs = self::getTotalPCs($id, $pcType);
 
-        if($totalPCs == 5){
-            return 500000;
+        if($totalPCs >= 5){
+            // Decreasing marginal cost: 500K base, +100K per extra server
+            return 500000 + ($totalPCs - 5) * 100000;
         } elseif($totalPCs == 4){
             return 100000;
         } elseif($totalPCs == 3){
             return 50000;
         }
-        
+
         return pow(10, $totalPCs + 2);
         
     }
@@ -4012,9 +4013,13 @@ class SoftwareVPC extends Player {
                                                 </td>
                                                 <td  class="hide-phone">
                                                     <?php
-                            if($softInfo->softtype != 31 && $softInfo->softtype != 26) { 
-                                echo self::colorSoftSize($softInfo->softsize); 
-                            } 
+                            if($softInfo->softtype == 31){
+                                $folderSize = $this->pdo->prepare("SELECT COALESCE(SUM(s.softSize), 0) FROM software_folders sf INNER JOIN software s ON sf.softID = s.id WHERE sf.folderID = ?");
+                                $folderSize->execute([$softInfo->id]);
+                                echo $folderSize->fetchColumn() . ' MB';
+                            } elseif($softInfo->softtype != 26) {
+                                echo self::colorSoftSize($softInfo->softsize);
+                            }
                             ?>
 
                                                 </td>

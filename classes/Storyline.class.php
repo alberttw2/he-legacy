@@ -320,27 +320,33 @@ class Storyline {
     }
     
     public function fbi_payBounty($ip){
-    
+
         $finances = new Finances();
-        
+
         $this->session->newQuery();
         $sql = "SELECT SUM(bounty) AS totalBounty FROM fbi WHERE ip = '".$ip."'";
         $bounty = $this->pdo->query($sql)->fetch(PDO::FETCH_OBJ)->totalbounty;
-        
-        $finances->addMoney($bounty, $finances->getWealthiestBankAcc());
-        
+
+        // Prevent double-claim: if bounty is null or 0, the record was already claimed
+        if(!$bounty || $bounty <= 0){
+            return;
+        }
+
+        // Delete first to prevent race condition double-claims
         $this->session->newQuery();
         $sql = "DELETE FROM fbi WHERE ip = '".$ip."'";
         $this->pdo->query($sql);
-        
+
         $this->session->newQuery();
         $sql = "DELETE FROM safeNet WHERE IP = '".$ip."'";
         $this->pdo->query($sql);
-        
+
+        $finances->addMoney($bounty, $finances->getWealthiestBankAcc());
+
         $ranking = new Ranking();
-        
+
         $ranking->updateMoneyStats(4, $bounty);
-        
+
     }
     
     private function fbi_calculateTime($reason, $info, $reincident = 0){

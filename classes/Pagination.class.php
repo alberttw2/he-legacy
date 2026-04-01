@@ -261,6 +261,12 @@ Class Pagination {
                             <div class="span4">
                                 <div class="list-ip">
                                     <a  href="internet?ip=<?php echo $correctIP; ?>"><span id="ip"><?php echo $correctIP; ?></span></a>
+<?php
+                                    $isNpcCheck = $this->pdo->prepare("SELECT COUNT(*) FROM npc WHERE npcIP = ?");
+                                    $isNpcCheck->execute([$showInfo->ip]);
+                                    $isNpc = $isNpcCheck->fetchColumn() > 0;
+                                    echo $isNpc ? ' <span class="label" style="font-size:9px;">NPC</span>' : ' <span class="label label-info" style="font-size:9px;">VPC</span>';
+?>
                                 </div>
                                 <div class="list-user">
                                     <span class="he16-user heicon" title="User"></span><span class="small"><?php echo $showInfo->user; ?></span> 

@@ -179,7 +179,7 @@ if($session->issetLogin()){
                         <div class="widget-box">
                             <div class="widget-title">
                                 <ul class="nav nav-tabs">
-                                    <li class="link <?php echo $allSoftware; ?>"><a href="software.php"><span class="icon-tab he16-software"></span></span><?php echo _("Softwares"); ?></a></li>
+                                    <li class="link <?php echo $allSoftware; ?>"><a href="software.php"><span class="icon-tab he16-software"></span><?php echo _("Internal HD"); ?></a></li>
                                     <li class="link <?php echo $external; ?>"><a href="?page=external"><span class="icon-tab he16-xhd"></span><span class="hide-phone"><?php echo _("External HD"); ?></span></a></li>
 <?php 
     if($specificSoftware != ''){ 
