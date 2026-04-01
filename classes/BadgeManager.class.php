@@ -250,7 +250,7 @@ class BadgeManager {
         $stmt->execute(array(':id' => $userID));
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $row['login'];
+        return $row ? $row['login'] : 'Unknown';
     }
 
     /**

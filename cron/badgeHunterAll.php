@@ -22,10 +22,10 @@ $stmt = $pdo->query('
     ORDER BY totalClicks DESC
 ');
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-    if ($row['totalClicks'] < 1000) {
+    if ($row['totalclicks'] < 1000) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 31);
+    BadgeManager::award('user', $row['userid'], 31);
 }
 
 // Badge 'you are addicted' (complete a total of 500 missions)
@@ -46,10 +46,10 @@ $stmt = $pdo->query('
     ORDER BY totalMissions DESC
 ');
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-    if ($row['totalMissions'] < 500) {
+    if ($row['totalmissions'] < 500) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 37);
+    BadgeManager::award('user', $row['userid'], 37);
 }
 
 // Badge 'Noob Certification' (reset IPs over 100 times)
@@ -67,10 +67,10 @@ $stmt = $pdo->query('
     ORDER BY totalResets DESC
 ');
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-    if ($row['totalResets'] < 100) {
+    if ($row['totalresets'] < 100) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 39);
+    BadgeManager::award('user', $row['userid'], 39);
 }
 
 // Badge 'I need help' (timeplaying >= 14 days = 20160 minutes)
@@ -88,10 +88,10 @@ $stmt = $pdo->query('
     ORDER BY totalPlaying DESC
 ');
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-    if ($row['totalPlaying'] < 20160) {
+    if ($row['totalplaying'] < 20160) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 41);
+    BadgeManager::award('user', $row['userid'], 41);
 }
 
 // Badges for 1, 2, and 5 years of age
@@ -125,13 +125,13 @@ $stmt = $pdo->query('
     ORDER BY totalRep DESC
 ');
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-    if ($row['totalRep'] < 1000000) {
+    if ($row['totalrep'] < 1000000) {
         break;
     }
-    if ($row['totalRep'] < 10000000) {
-        BadgeManager::award('user', $row['userID'], 46);
+    if ($row['totalrep'] < 10000000) {
+        BadgeManager::award('user', $row['userid'], 46);
     } else {
-        BadgeManager::award('user', $row['userID'], 47);
+        BadgeManager::award('user', $row['userid'], 47);
     }
 }
 
@@ -150,10 +150,10 @@ $stmt = $pdo->query('
     ORDER BY totalDdos DESC
 ');
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-    if ($row['totalDdos'] < 1000) {
+    if ($row['totalddos'] < 1000) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 57);
+    BadgeManager::award('user', $row['userid'], 57);
 }
 
 // Badge 'Talker' (send over 100 emails)
@@ -222,10 +222,10 @@ $stmt = $pdo->query('
     ORDER BY totalResearch DESC
 ');
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-    if ($row['totalResearch'] < 500) {
+    if ($row['totalresearch'] < 500) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 66);
+    BadgeManager::award('user', $row['userid'], 66);
 }
 
 // Badge 'hacker master' (hackcount over 1000)
@@ -243,10 +243,10 @@ $stmt = $pdo->query('
     ORDER BY totalHack DESC
 ');
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-    if ($row['totalHack'] < 1000) {
+    if ($row['totalhack'] < 1000) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 68);
+    BadgeManager::award('user', $row['userid'], 68);
 }
 
 $elapsed = round(microtime(true) - $startTime, 4);

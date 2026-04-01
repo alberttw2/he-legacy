@@ -29,22 +29,43 @@ Plan de migración de Hacker Experience Legacy a Laravel 12 con frontend moderno
 
 ---
 
-## Stack propuesto
+## Stack propuesto (2026)
 
-| Componente | Actual | Propuesto |
-|-----------|--------|-----------|
-| Backend | PHP 8.4 procedural | Laravel 12 (PHP 8.4) |
-| Frontend | jQuery 1.11 + Bootstrap 3 | Vue 3 + Inertia.js + Tailwind CSS |
-| BD | MariaDB raw PDO | Eloquent ORM + Migrations |
-| Auth | Sesión custom | Laravel Sanctum / Fortify |
-| AJAX | $.post → ajax.php | API Routes + Axios |
-| Cron | crontab + scripts PHP | Laravel Task Scheduler |
-| Email | SES stub | Laravel Mail + SMTP |
-| Tests | PHPUnit básico (16 tests) | PHPUnit + Pest + Feature tests |
-| Assets | Archivos sueltos | Vite (bundler) |
-| Cache | Ninguno | Laravel Cache (Redis) |
-| Queue | Ninguno | Laravel Queue (para procesos de juego) |
-| WebSocket | Ninguno | Laravel Reverb (para real-time) |
+| Componente | Actual (Legacy) | Propuesto | Versión |
+|-----------|----------------|-----------|---------|
+| **Backend** | PHP 8.4 procedural | Laravel 12 | 12.x (PHP 8.4+) |
+| **Frontend Framework** | jQuery 1.11 | Vue 3 (Composition API) | 3.5+ |
+| **CSS Framework** | Bootstrap 3.0.2 | Tailwind CSS | 4.x |
+| **SPA Bridge** | — | Inertia.js | 2.x |
+| **UI Components** | — | Headless UI / Radix Vue | latest |
+| **Build Tool** | Archivos sueltos | Vite | 6.x |
+| **BD** | MariaDB raw PDO | Eloquent ORM + Migrations | MariaDB 11+ |
+| **Auth** | Sesión custom | Laravel Fortify + Sanctum | latest |
+| **API** | $.post → ajax.php | API Routes + Axios | — |
+| **Cron** | crontab + scripts PHP | Laravel Task Scheduler | — |
+| **Email** | SES stub | Laravel Mail (Resend/SMTP) | — |
+| **Tests** | PHPUnit básico (16 tests) | Pest 3 + Laravel Dusk | Pest 3.x |
+| **Cache** | Ninguno | Laravel Cache (Redis) | Redis 7+ |
+| **Queue** | Ninguno | Laravel Queue (Redis driver) | — |
+| **WebSocket** | Ninguno | Laravel Reverb | 1.x |
+| **Monitoreo** | Ninguno | Laravel Pulse | 1.x |
+| **Admin Panel** | Custom PHP | Filament 3 | 3.x |
+| **Icons** | Font Awesome 4.7 | Heroicons / Lucide | latest |
+| **Charts** | easyPieChart | Chart.js / ApexCharts | latest |
+| **TypeScript** | — | TypeScript | 5.x |
+| **Linting** | — | ESLint + Prettier + Pint | latest |
+| **CI/CD** | — | GitHub Actions | — |
+| **Deploy** | Manual | Laravel Forge / Coolify | — |
+
+### Por qué este stack
+
+- **Laravel 12**: El framework PHP más maduro, con ecosystem completo (auth, queue, cache, websockets, admin, monitoring)
+- **Vue 3 + Inertia.js**: SPA sin API separada — Inertia envía props desde Laravel controllers directamente a Vue components. Sin duplicar rutas ni serializar/deserializar JSON manualmente
+- **Tailwind CSS 4**: Utility-first, sin CSS custom. Diseño consistente, responsive nativo, dark mode gratis. Reemplaza 14 archivos CSS por clases utilitarias
+- **Pest 3**: Tests legibles, tipo BDD. Feature tests que cubren flujos completos del juego
+- **Filament 3**: Admin panel auto-generado desde modelos Eloquent. Reemplaza el admin/ custom
+- **Laravel Reverb**: WebSocket server nativo de Laravel. Process bars en real-time, chat de clan, alertas DDoS instantáneas — sin polling
+- **Laravel Pulse**: Dashboard de monitoreo integrado. Queries lentas, jobs fallidos, uso de memoria
 
 ---
 

@@ -42,8 +42,8 @@ $stmtDelRunning = $pdo->prepare("DELETE FROM software_running WHERE userID = ? A
 $stmtDelSoftware = $pdo->prepare("DELETE FROM software WHERE userID = ? AND isNPC = '1'");
 
 foreach ($npcs as $npc) {
-    $npcID = (int)$npc['npcID'];
-    $npcIP = $npc['npcIP'];
+    $npcID = (int)($npc['npcid'] ?? $npc['npcID'] ?? 0);
+    $npcIP = $npc['npcip'] ?? $npc['npcIP'] ?? 0;
 
     // Find viruses installed on this NPC
     $stmtViruses->execute([$npcIP]);
@@ -58,13 +58,13 @@ foreach ($npcs as $npc) {
 
         foreach ($affectedUsers as $userID) {
             // Build virus name with extension
-            $virusName = $virus['softName'];
+            $virusName = $virus['softname'];
 
-            if ((int)$virus['softType'] === 97) {
+            if ((int)$virus['softtype'] === 97) {
                 $virusName .= '.vddos ';
-            } elseif ((int)$virus['softType'] === 98) {
+            } elseif ((int)$virus['softtype'] === 98) {
                 $virusName .= '.vwarez ';
-            } elseif ((int)$virus['softType'] === 99) {
+            } elseif ((int)$virus['softtype'] === 99) {
                 $virusName .= '.vpsam ';
             }
 

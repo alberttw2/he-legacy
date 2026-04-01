@@ -4300,9 +4300,32 @@ if($npc == 1 && $local == 0){
             }
 
         } else {
+
+            // No software — show message + upload/HDD sidebar for remote servers
             if ($local == '0') {
+                $hddInfo = $this->hardware->calculateHDDUsage($id, $pcType);
 ?>
-                <div class="alert alert-info"><?php echo _("There are no softwares to display."); ?></div>
+                <div class="span9">
+                    <div class="alert alert-info"><?php echo _("There are no softwares to display."); ?></div>
+                </div>
+                <div class="span3" style="text-align: center;">
+                    <div id="softwarebar">
+<?php
+                    self::uploadHTML();
+
+                    $internet = $hddInfo['NET'] ?? 0;
+                    $rates = $this->hardware->getInternetRates($internet);
+?>
+                        <div style="margin-top: 5px;">
+                            <span class="small"><strong><?php echo HardwareFormat::net($internet); ?></strong> ( <?php echo $rates['downloadstr']; ?> - <?php echo $rates['uploadstr']; ?>)</span>
+                        </div>
+                        <div class="hd-usage">
+                            <div class="hd-usage-text"><?php echo _("HDD Usage"); ?></div>
+                            <span class="small"><font color="green">0 MB</font> / <font color="red"><?php echo ($hddInfo['TOTAL'] ?? 0); ?> MB</font></span>
+                        </div>
+                    </div>
+                </div>
+                <div style="clear: both;" class="nav nav-tabs">&nbsp;</div>
 <?php
             } else {
 ?>

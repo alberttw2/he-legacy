@@ -18,7 +18,7 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     if ($row['total'] < 100) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 22);
+    BadgeManager::award('user', $row['userid'], 22);
 }
 
 // Badge 'b4nk3r' (50+ accounts in list)
@@ -32,7 +32,7 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     if ($row['total'] < 50) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 23);
+    BadgeManager::award('user', $row['userid'], 23);
 }
 
 // Badge 'who ate my ram' (20+ running softwares)
@@ -47,7 +47,7 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     if ($row['total'] < 20) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 51);
+    BadgeManager::award('user', $row['userid'], 51);
 }
 
 // Badge 'Employee' (50+ completed missions)
@@ -62,7 +62,7 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     if ($row['total'] < 50) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 36);
+    BadgeManager::award('user', $row['userid'], 36);
 }
 
 // Badge 'I Cant Handle' (20+ IP resets)
@@ -143,7 +143,7 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     if ($row['total'] < 50) {
         break;
     }
-    BadgeManager::award('user', $row['userID'], 65);
+    BadgeManager::award('user', $row['userid'], 65);
 }
 
 // Badge 'Hacker' (100+ hack count)

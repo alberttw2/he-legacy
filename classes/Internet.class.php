@@ -1179,8 +1179,18 @@ if($xpDisable){
                     if($_SESSION['MISSION_TYPE'] == 81){
                         require BASE_PATH . 'classes/Mission.class.php';
                         $mission = new Mission();
-                        
+
                         $mission->tutorial_update(82);
+                    }
+                    // Type 6: Collect Intel — complete when viewing victim's logs
+                    if(($_SESSION['MISSION_TYPE'] ?? 0) == 6){
+                        require_once BASE_PATH . 'classes/Mission.class.php';
+                        $mission = new Mission();
+                        $missionVictimIP = $mission->missionVictim($_SESSION['MISSION_ID']);
+                        if(($_SESSION['LOGGED_IN'] ?? 0) == $missionVictimIP){
+                            $mission->completeMission($_SESSION['MISSION_ID']);
+                            $this->session->addMsg(_('Intel collected! Mission complete. Go to Missions to claim your reward.'), 'mission');
+                        }
                     }
                 }
                 

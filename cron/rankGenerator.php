@@ -112,15 +112,15 @@ function createRankUsers($pdo) {
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $i++;
 
-        $userID   = $row['userID'];
-        $clanID   = $row['clanID'];
+        $userID   = $row['userid'];
+        $clanID   = $row['clanid'];
         $username = $row['login'];
         $premium  = $row[4] ?? $row['id'];
         $online   = $row[4] ?? null;
         $exp      = $row['exp'];
         $clanNick = $row['nick'];
         $clanName = $row['name'];
-        $hackCount = $row['hackedDB'];
+        $hackCount = $row['hackeddb'];
 
         $pos = '<center>' . $i . '</center>';
 
@@ -197,12 +197,12 @@ function createRankClans($pdo) {
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $i++;
 
-        $clanID  = $row['clanID'];
+        $clanID  = $row['clanid'];
         $name    = $row['name'];
         $nick    = $row['nick'];
-        $members = $row['slotsUsed'];
+        $members = $row['slotsused'];
         $power   = $row['power'];
-        $war     = $row['clanID1'];
+        $war     = $row['clanid1'];
         $won     = $row['won'];
         $lost    = $row['lost'];
 
@@ -274,11 +274,11 @@ function createRankSoft($pdo) {
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $i++;
 
-        $softID   = $row['softID'];
+        $softID   = $row['softid'];
         $name     = $row['softwarename'];
-        $userID   = $row['userID'];
-        $softType = $row['softwareType'];
-        $version  = $row['newVersion'];
+        $userID   = $row['userid'];
+        $softType = $row['softwaretype'];
+        $version  = $row['newversion'];
 
         $pos = '<center>' . $i . '</center>';
 
@@ -347,9 +347,9 @@ function createRankDDoS($pdo) {
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $i++;
 
-        $attID   = $row['attID'];
-        $attUser = $row['attUser'];
-        $vicID   = $row['vicID'];
+        $attID   = $row['attid'];
+        $attUser = $row['attuser'];
+        $vicID   = $row['vicid'];
         $power   = $row['power'];
         $servers = $row['servers'];
 

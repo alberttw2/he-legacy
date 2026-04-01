@@ -2426,6 +2426,14 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                                                     $this->session->addMsg('Software uploaded. Mission completed!', 'mission');
                                                 }
 
+                                            } elseif($_SESSION['MISSION_TYPE'] == '7'){
+                                                // Type 7: Upload virus — complete when uploading any software to victim
+                                                $missionVictimIP = $this->mission->missionVictim($_SESSION['MISSION_ID']);
+                                                if(($_SESSION['LOGGED_IN'] ?? 0) == $missionVictimIP){
+                                                    $this->mission->completeMission($_SESSION['MISSION_ID']);
+                                                    $this->session->addMsg('Software uploaded to target. Mission completed!', 'mission');
+                                                }
+
                                             } elseif($_SESSION['MISSION_TYPE'] == 83){
                                                 
                                                 if($this->mission->missionInfo($_SESSION['MISSION_ID']) == $this->pSoftID){
@@ -3508,8 +3516,20 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                                 $this->finances->debtMoney($price, $acc);
 
                                 $this->session->exp_add('RESEARCH', Array($softInfo->softtype, $softInfo->softversion+1));
-                                
+
                                 $this->session->addMsg('Software researched.', 'notice');
+
+                                // Type 8: Research Race — complete when reaching target version
+                                if($this->session->issetMissionSession() && ($_SESSION['MISSION_TYPE'] ?? 0) == 8){
+                                    require_once BASE_PATH . 'classes/Mission.class.php';
+                                    $missionCheck = new Mission();
+                                    $targetType = $missionCheck->missionInfo($_SESSION['MISSION_ID']);
+                                    $targetVer = $missionCheck->missionNewInfo($_SESSION['MISSION_ID']);
+                                    if($softInfo->softtype == $targetType && ($softInfo->softversion + 1) >= $targetVer){
+                                        $missionCheck->completeMission($_SESSION['MISSION_ID']);
+                                        $this->session->addMsg('Research target reached! Mission completed!', 'mission');
+                                    }
+                                }
 
                                 $this->ranking->updateMoneyStats('2', $price);
 
