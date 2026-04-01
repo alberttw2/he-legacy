@@ -395,15 +395,15 @@ if (ini_get("session.use_cookies")) {
     }
     
     public function getSkill(){
-        
-        return $_SESSION['SKILL'];
-        
+
+        return $_SESSION['SKILL'] ?? 0;
+
     }
     
     public function getCert(){
-        
-        return $_SESSION['CERT'];
-        
+
+        return $_SESSION['CERT'] ?? 0;
+
     }
     
     public function exp_add($action, $info = '', $uid = ''){

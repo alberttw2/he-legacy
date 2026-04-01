@@ -13,8 +13,8 @@
       },
       "ip": "1.2.3.4",
       "web": {
-        "en": "Welcome to the First Whois server. Enjoy our services!<ul class=\"whois\"><li><a href=\"internet?ip=::DC/ip::\"><span \nclass=\"item\">::DC/ip::</span> - <span \nclass=\"whois-member\">::DC/name::</span></a></li><li><a href=\"internet?ip=::TORRENT/ip::\"><span \nclass=\"item\">::TORRENT/ip::</span> - <span \nclass=\"whois-member\">::TORRENT/name::</span></a></li><li><a href=\"internet?ip=::PUZZLE/1/ip::\"><span \nclass=\"item\">::PUZZLE/1/ip::</span> - <span \nclass=\"whois-member\">::PUZZLE/1/name::</span></a></li><li><a href=\"internet?ip=::BANK/1/ip::\"><span class=\"item\">::BANK/1/ip::</span> - <span class=\"whois-member\">::BANK/1/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/1/ip::\"><span class=\"item\">::HIRER/LEVEL1/1/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/1/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/2/ip::\"><span class=\"item\">::HIRER/LEVEL1/2/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/2/name::</span></a></li><li><a href=\"internet?ip=::SAFENET/ip::\"><span \nclass=\"item\">::SAFENET/ip::</span> - <span \nclass=\"whois-member\">::SAFENET/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/4/ip::\"><span class=\"item\">::HIRER/LEVEL1/4/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/4/name::</span></a></li></ul>Trending Sites:<ul class=\"whois\"><li><a href=\"internet?ip=::ISP/ip::\"><span class=\"item\">::ISP/ip::</span> - <span class=\"whois-member\">::ISP/name::</span></a></li><li><a href=\"internet?ip=::NSA/ip::\"><span class=\"item\">::NSA/ip::</span> - <span class=\"whois-member\">::NSA/name::</span></a></li><li><a href=\"internet?ip=::PUZZLE/5/ip::\"><span \nclass=\"item\">::PUZZLE/5/ip::</span> - <span \nclass=\"whois-member\">::PUZZLE/5/name::</span></a></li></ul>",
-        "pt": "Bem-vindo ao primeiro whois!<ul class=\"whois\"><li><a href=\"internet?ip=::DC/ip::\"><span \nclass=\"item\">::DC/ip::</span> - <span \nclass=\"whois-member\">::DC/name::</span></a></li><li><a href=\"internet?ip=::TORRENT/ip::\"><span \nclass=\"item\">::TORRENT/ip::</span> - <span \nclass=\"whois-member\">::TORRENT/name::</span></a></li><li><a href=\"internet?ip=::PUZZLE/1/ip::\"><span \nclass=\"item\">::PUZZLE/1/ip::</span> - <span \nclass=\"whois-member\">::PUZZLE/1/name::</span></a></li><li><a href=\"internet?ip=::BANK/1/ip::\"><span class=\"item\">::BANK/1/ip::</span> - <span class=\"whois-member\">::BANK/1/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/1/ip::\"><span class=\"item\">::HIRER/LEVEL1/1/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/1/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/2/ip::\"><span class=\"item\">::HIRER/LEVEL1/2/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/2/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/4/ip::\"><span class=\"item\">::HIRER/LEVEL1/4/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/4/name::</span></a></li></ul>Trending Sites:<ul class=\"whois\"><li><a href=\"internet?ip=::ISP/ip::\"><span class=\"item\">::ISP/ip::</span> - <span class=\"whois-member\">::ISP/name::</span></a></li><li><a href=\"internet?ip=::NSA/ip::\"><span class=\"item\">::NSA/ip::</span> - <span class=\"whois-member\">::NSA/name::</span></a></li><li><a href=\"internet?ip=::PUZZLE/5/ip::\"><span \nclass=\"item\">::PUZZLE/5/ip::</span> - <span \nclass=\"whois-member\">::PUZZLE/5/name::</span></a></li></ul>"
+        "en": "Welcome to the First Whois server. Enjoy our services!<ul class=\"whois\"><li><a href=\"internet?ip=::DC/ip::\"><span \nclass=\"item\">::DC/ip::</span> - <span \nclass=\"whois-member\">::DC/name::</span></a></li><li><a href=\"internet?ip=::TORRENT/ip::\"><span \nclass=\"item\">::TORRENT/ip::</span> - <span \nclass=\"whois-member\">::TORRENT/name::</span></a></li><li><a href=\"internet?ip=::PUZZLE/1/ip::\"><span \nclass=\"item\">::PUZZLE/1/ip::</span> - <span \nclass=\"whois-member\">::PUZZLE/1/name::</span></a></li><li><a href=\"internet?ip=::BANK/1/ip::\"><span class=\"item\">::BANK/1/ip::</span> - <span class=\"whois-member\">::BANK/1/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/1/ip::\"><span class=\"item\">::HIRER/LEVEL1/1/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/1/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/2/ip::\"><span class=\"item\">::HIRER/LEVEL1/2/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/2/name::</span></a></li><li><a href=\"internet?ip=::SAFENET/ip::\"><span \nclass=\"item\">::SAFENET/ip::</span> - <span \nclass=\"whois-member\">::SAFENET/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/4/ip::\"><span class=\"item\">::HIRER/LEVEL1/4/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/4/name::</span></a></li></ul>Trending Sites:<ul class=\"whois\"><li><a href=\"internet?ip=::ISP/ip::\"><span class=\"item\">::ISP/ip::</span> - <span class=\"whois-member\">::ISP/name::</span></a></li><li><a href=\"internet?ip=::NSA/ip::\"><span class=\"item\">::NSA/ip::</span> - <span class=\"whois-member\">::NSA/name::</span></a></li><li><a href=\"internet?ip=::PUZZLE/5/ip::\"><span \nclass=\"item\">::PUZZLE/5/ip::</span> - <span \nclass=\"whois-member\">::PUZZLE/5/name::</span></a></li><li><a href=\"internet?ip=::PUZZLE_CRYPTO/1/ip::\"><span class=\"item\">::PUZZLE_CRYPTO/1/ip::</span> - <span class=\"whois-member\">::PUZZLE_CRYPTO/1/name::</span></a></li></ul>",
+        "pt": "Bem-vindo ao primeiro whois!<ul class=\"whois\"><li><a href=\"internet?ip=::DC/ip::\"><span \nclass=\"item\">::DC/ip::</span> - <span \nclass=\"whois-member\">::DC/name::</span></a></li><li><a href=\"internet?ip=::TORRENT/ip::\"><span \nclass=\"item\">::TORRENT/ip::</span> - <span \nclass=\"whois-member\">::TORRENT/name::</span></a></li><li><a href=\"internet?ip=::PUZZLE/1/ip::\"><span \nclass=\"item\">::PUZZLE/1/ip::</span> - <span \nclass=\"whois-member\">::PUZZLE/1/name::</span></a></li><li><a href=\"internet?ip=::BANK/1/ip::\"><span class=\"item\">::BANK/1/ip::</span> - <span class=\"whois-member\">::BANK/1/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/1/ip::\"><span class=\"item\">::HIRER/LEVEL1/1/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/1/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/2/ip::\"><span class=\"item\">::HIRER/LEVEL1/2/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/2/name::</span></a></li><li><a href=\"internet?ip=::HIRER/LEVEL1/4/ip::\"><span class=\"item\">::HIRER/LEVEL1/4/ip::</span> - <span class=\"whois-member\">::HIRER/LEVEL1/4/name::</span></a></li></ul>Trending Sites:<ul class=\"whois\"><li><a href=\"internet?ip=::ISP/ip::\"><span class=\"item\">::ISP/ip::</span> - <span class=\"whois-member\">::ISP/name::</span></a></li><li><a href=\"internet?ip=::NSA/ip::\"><span class=\"item\">::NSA/ip::</span> - <span class=\"whois-member\">::NSA/name::</span></a></li><li><a href=\"internet?ip=::PUZZLE/5/ip::\"><span \nclass=\"item\">::PUZZLE/5/ip::</span> - <span \nclass=\"whois-member\">::PUZZLE/5/name::</span></a></li><li><a href=\"internet?ip=::PUZZLE_CRYPTO/1/ip::\"><span class=\"item\">::PUZZLE_CRYPTO/1/ip::</span> - <span class=\"whois-member\">::PUZZLE_CRYPTO/1/name::</span></a></li></ul>"
       }
     },
     "2": {
@@ -1714,5 +1714,168 @@
       "en": "",
       "pt": ""
     }
+  },
+  "PUZZLE_CRYPTO": {
+    "1": {
+      "name": {
+        "en": "Crypto Lab #1",
+        "pt": "Laboratorio Crypto #1"
+      },
+      "hardware": {
+        "cpu": 3500,
+        "hdd": 10000,
+        "ram": 2048,
+        "net": 20
+      },
+      "web": {
+        "en": "Welcome to the Crypto Puzzles branch. These challenges test your knowledge of cryptography, encoding, and network security.<br/><br/>Can you crack all 10 challenges? Good luck!",
+        "pt": "Bem-vindo ao ramo de Enigmas Crypto. Estes desafios testam seu conhecimento de criptografia, codificacao e seguranca de rede.<br/><br/>Voce consegue resolver todos os 10 desafios? Boa sorte!"
+      }
+    },
+    "2": {
+      "name": {
+        "en": "Cipher Challenge #2",
+        "pt": "Desafio de Cifra #2"
+      },
+      "hardware": {
+        "cpu": 3500,
+        "hdd": 12000,
+        "ram": 2048,
+        "net": 20
+      },
+      "web": {
+        "en": "Caesar knew the power of simple substitution. Do you?",
+        "pt": "Cesar conhecia o poder da substituicao simples. E voce?"
+      }
+    },
+    "3": {
+      "name": {
+        "en": "Hash Lab #3",
+        "pt": "Laboratorio Hash #3"
+      },
+      "hardware": {
+        "cpu": 4000,
+        "hdd": 15000,
+        "ram": 2048,
+        "net": 25
+      },
+      "web": {
+        "en": "MD5 is broken, but can you still remember its outputs?",
+        "pt": "MD5 esta quebrado, mas voce ainda lembra de suas saidas?"
+      }
+    },
+    "4": {
+      "name": {
+        "en": "Encoding Station #4",
+        "pt": "Estacao de Codificacao #4"
+      },
+      "hardware": {
+        "cpu": 3500,
+        "hdd": 10000,
+        "ram": 2048,
+        "net": 20
+      },
+      "web": {
+        "en": "Base64 is not encryption, but it is everywhere on the web.",
+        "pt": "Base64 nao e criptografia, mas esta em todo lugar na web."
+      }
+    },
+    "5": {
+      "name": {
+        "en": "Network Security #5",
+        "pt": "Seguranca de Rede #5"
+      },
+      "hardware": {
+        "cpu": 4000,
+        "hdd": 12000,
+        "ram": 2048,
+        "net": 30
+      },
+      "web": {
+        "en": "Know your ports, know your protocols.",
+        "pt": "Conheca suas portas, conheca seus protocolos."
+      }
+    },
+    "6": {
+      "name": {
+        "en": "Rotation Cipher #6",
+        "pt": "Cifra de Rotacao #6"
+      },
+      "hardware": {
+        "cpu": 3500,
+        "hdd": 15000,
+        "ram": 2048,
+        "net": 20
+      },
+      "web": {
+        "en": "ROT13: the cipher that is its own inverse.",
+        "pt": "ROT13: a cifra que e seu proprio inverso."
+      }
+    },
+    "7": {
+      "name": {
+        "en": "Database Challenge #7",
+        "pt": "Desafio de Banco de Dados #7"
+      },
+      "hardware": {
+        "cpu": 4000,
+        "hdd": 20000,
+        "ram": 2048,
+        "net": 25
+      },
+      "web": {
+        "en": "Every hacker should know their databases inside and out.",
+        "pt": "Todo hacker deveria conhecer seus bancos de dados por dentro e por fora."
+      }
+    },
+    "8": {
+      "name": {
+        "en": "Binary Lab #8",
+        "pt": "Laboratorio Binario #8"
+      },
+      "hardware": {
+        "cpu": 3500,
+        "hdd": 10000,
+        "ram": 2048,
+        "net": 20
+      },
+      "web": {
+        "en": "There are 10 types of people in the world: those who understand binary and those who don't.",
+        "pt": "Existem 10 tipos de pessoas no mundo: as que entendem binario e as que nao."
+      }
+    },
+    "9": {
+      "name": {
+        "en": "Secure Shell #9",
+        "pt": "Shell Seguro #9"
+      },
+      "hardware": {
+        "cpu": 4000,
+        "hdd": 15000,
+        "ram": 2048,
+        "net": 30
+      },
+      "web": {
+        "en": "SSH: the backbone of secure remote administration.",
+        "pt": "SSH: a espinha dorsal da administracao remota segura."
+      }
+    },
+    "10": {
+      "name": {
+        "en": "Final Crypto Challenge",
+        "pt": "Desafio Crypto Final"
+      },
+      "hardware": {
+        "cpu": 4500,
+        "hdd": 20000,
+        "ram": 2048,
+        "net": 35
+      },
+      "web": {
+        "en": "The final challenge. Prove your mastery of cryptographic standards.",
+        "pt": "O desafio final. Prove seu dominio dos padroes criptograficos."
+      }
+    },
+    "type": 7
   }
 }

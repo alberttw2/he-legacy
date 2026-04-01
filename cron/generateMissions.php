@@ -90,22 +90,22 @@ function generateMissions($level, $total, $pdo){
 
         $type = rand(1,100);
 
-        if($type < 30){
+        if($type <= 25){
             $type = 1;
+        } elseif($type <= 48){
+            $type = 2;
+        } elseif($type <= 65){
+            $type = 3;
+        } elseif($type <= 77){
+            $type = 4;
+        } elseif($type <= 84){
+            $type = 5;
+        } elseif($type <= 92){
+            $type = 6;
+        } elseif($type <= 97){
+            $type = 7;
         } else {
-            if($type < 60){
-                $type = 2;
-            } else {
-                if($type < 80){
-                    $type = 3;
-                } else {
-                    if($type < 90){
-                        $type = 4;
-                    } else {
-                        $type = 5;
-                    }
-                }
-            }
+            $type = 8;
         }
 
         switch($type){
@@ -124,6 +124,15 @@ function generateMissions($level, $total, $pdo){
                 break;
             case 5:
                 $prize = rand(3000,5000);
+                break;
+            case 6:
+                $prize = rand(200, 400);
+                break;
+            case 7:
+                $prize = rand(400, 700);
+                break;
+            case 8:
+                $prize = rand(500, 1000);
                 break;
 
         }
@@ -222,6 +231,24 @@ function generateMissions($level, $total, $pdo){
                 }
 
                 break;
+            case 6: //spy - collect intel
+                $id = $npcArr['id'][$victimID];
+                $sqlQuery = "SELECT userID FROM log WHERE isNPC = 1 AND userID = $id LIMIT 1";
+                $tmp = $pdo->query($sqlQuery)->fetchAll();
+                if(count($tmp) > 0){
+                    $info = $tmp[0]['userid'];
+                } else {
+                    $info = 0;
+                }
+                break;
+            case 7: //upload virus
+                $info = 0;
+                break;
+            case 8: //research race
+                $softTypes = array(1, 2, 3, 4, 5, 6);
+                $info = $softTypes[array_rand($softTypes)];
+                $newInfo = rand(20, 80);
+                break;
             case 5: //ddos
 
                 $sql = "SELECT npc.npcIP
@@ -277,6 +304,15 @@ function generateMissions($level, $total, $pdo){
                 $limitArr[5] = 2;
                 break;
             case 5:
+                $limitArr[2] = 2;
+                break;
+            case 6:
+                $limitArr[2] = 2;
+                break;
+            case 7:
+                $limitArr[2] = 2;
+                break;
+            case 8:
                 $limitArr[2] = 2;
                 break;
         }

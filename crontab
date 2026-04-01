@@ -25,6 +25,7 @@ LOG=/var/log/game/cron.log
 19,49 * * * *			$PHP	$GAME_PATH/cron/badgeHunter.php		>> $LOG 2>&1
 
 # === Hourly ===
+00 * * * *			$PHP	$GAME_PATH/cron/clanIncome.php		>> $LOG 2>&1
 00 * * * *			$PHP	$GAME_PATH/cron/updateCurStats.php	>> $LOG 2>&1
 00 * * * *			$PHP	$GAME_PATH/cron/updateRanking.php	>> $LOG 2>&1
 00 * * * *			$PHP	$GAME_PATH/cron/rankGenerator.php	>> $LOG 2>&1

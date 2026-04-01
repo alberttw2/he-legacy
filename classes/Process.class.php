@@ -58,46 +58,80 @@ class Process {
     }
 
     public function getDownloadSpeed($vicID, $vicNPC, $pAction, $netUsage){
-        
+
         if($vicNPC == 1){
             $pcType = 'NPC';
         } else {
             $pcType = 'VPC';
         }
-                
+
         $netInfoHacker = $this->hardware->getHardwareInfo($_SESSION['id'], 'VPC');
         $netInfoHacked = $this->hardware->getHardwareInfo($vicID, $pcType);
-        
+
+        // Get netType for hacker
+        $netTypeStmt = $this->pdo->prepare("SELECT netType FROM hardware WHERE userID = ? AND isNPC = 0 LIMIT 1");
+        $netTypeStmt->execute([$_SESSION['id']]);
+        $hackerNetType = (int)$netTypeStmt->fetchColumn();
+
+        // Get netType for victim
+        $vicNPCFlag = ($vicNPC == 1) ? 1 : 0;
+        $netTypeStmt2 = $this->pdo->prepare("SELECT netType FROM hardware WHERE userID = ? AND isNPC = ? LIMIT 1");
+        $netTypeStmt2->execute([$vicID, $vicNPCFlag]);
+        $victimNetType = (int)$netTypeStmt2->fetchColumn();
+
         if($pAction == 1){ //download
-            
-            $downloadRateHacker = $netInfoHacker['NET']/8;
-            $uploadRateHacked = $netInfoHacked['NET']/16;            
-            
+
+            // Hacker download rate based on netType
+            switch($hackerNetType) {
+                case 2:  $downloadRateHacker = $netInfoHacker['NET']/6; break; // dedicated fiber
+                default: $downloadRateHacker = $netInfoHacker['NET']/8; break; // asym & sym same download
+            }
+
+            // Victim upload rate based on netType
+            switch($victimNetType) {
+                case 1:  $uploadRateHacked = $netInfoHacked['NET']/8; break;  // symmetric
+                case 2:  $uploadRateHacked = $netInfoHacked['NET']/6; break;  // dedicated fiber
+                default: $uploadRateHacked = $netInfoHacked['NET']/16; break; // asymmetric
+            }
+
             $transferRate = $downloadRateHacker;
             if($uploadRateHacked < $downloadRateHacker){
                 $transferRate = $uploadRateHacked;
-            }            
-            
+            }
+
         } else { //upload
 
-            $uploadRateHacker = $netInfoHacker['NET']/16;
-            $downloadRateHacked = $netInfoHacked['NET']/8;            
+            // Hacker upload rate based on netType
+            switch($hackerNetType) {
+                case 1:  $uploadRateHacker = $netInfoHacker['NET']/8; break;  // symmetric
+                case 2:  $uploadRateHacker = $netInfoHacker['NET']/6; break;  // dedicated fiber
+                default: $uploadRateHacker = $netInfoHacker['NET']/16; break; // asymmetric
+            }
+
+            // Victim download rate based on netType
+            switch($victimNetType) {
+                case 2:  $downloadRateHacked = $netInfoHacked['NET']/6; break; // dedicated fiber
+                default: $downloadRateHacked = $netInfoHacked['NET']/8; break; // asym & sym same download
+            }
 
             $transferRate = $uploadRateHacker;
             if($downloadRateHacked < $uploadRateHacker){
-                $transfer = $downloadRateHacked;
-            }            
-            
+                $transferRate = $downloadRateHacked;
+            }
+
         }
-        
-        return ($transferRate * 1000) * ($netUsage / 100);
-        
+
+        return round(($transferRate * 1000) * ($netUsage / 100), 1);
+
     }
      
    public function listProcesses($uid, $type){
 
         // Auto-redistribute resources for completed processes
         self::redistributeCompleted($uid);
+
+        // Auto-complete simple processes (e.g. Edit Log)
+        self::autoCompleteSimple($uid);
 
         switch($type){
 
@@ -132,6 +166,9 @@ class Process {
 
                 $scriptArr = Array();
                 $i=0;
+                $completedCount = 0;
+                $activeCount = 0;
+                $pausedCount = 0;
                 $groupedData = [];
                 if (!empty($netProcs)) {
                     $groupedData[] = ['header' => '<span class="he16-net"></span> ' . _('Network Processes (Downloads/Uploads)'), 'procs' => $netProcs, 'activeCount' => $activeNetCount, 'isNet' => true];
@@ -164,10 +201,19 @@ class Process {
                         $timeLeft = $pInfo->ptimeleft;
                         $done = '0';
 
+                        if ($pInfo->ispaused == 1) {
+                            $pausedCount++;
+                        } else {
+                            $activeCount++;
+                        }
+
                     } else { //processo terminou
 
                         $timeLeft = 0;
                         $done = '1';
+                        if ($pInfo->ispaused == 0) {
+                            $completedCount++;
+                        }
 
                     }
 
@@ -411,10 +457,20 @@ class Process {
                         </div>
                         <div class="span6"  style="text-align: right;">  
                             
-                                <?php if($link != ''){ ?>
-                                <a href="processes?pid=<?php echo $pInfo->pid; ?>&action=priority" title="<?php echo ($pInfo->priority > 1) ? _('Set Normal Priority') : _('Set High Priority'); ?>">
-                                    <span class="he16-cog heicon" style="<?php echo ($pInfo->priority > 1) ? 'color:green;' : ''; ?>"></span>
-                                </a>
+                                <?php if($link != ''){
+                                    $pri = (int)($pInfo->priority ?? 2);
+                                    $priLabel = $pri == 3 ? 'HIGH' : ($pri == 1 ? 'LOW' : '');
+                                    $priColor = $pri == 3 ? 'color:#259D1C;' : ($pri == 1 ? 'color:#BA1E20;' : '');
+                                ?>
+                                <?php if($pri < 3): ?>
+                                    <a href="processes?pid=<?php echo $pInfo->pid; ?>&action=priority&dir=up" title="<?php echo _('Increase Priority'); ?>"><span class="fa fa-arrow-up" style="font-size:11px;<?php echo $priColor; ?>"></span></a>
+                                <?php endif; ?>
+                                <?php if($priLabel): ?>
+                                    <span style="font-size:9px;font-weight:bold;<?php echo $priColor; ?>"><?php echo $priLabel; ?></span>
+                                <?php endif; ?>
+                                <?php if($pri > 1): ?>
+                                    <a href="processes?pid=<?php echo $pInfo->pid; ?>&action=priority&dir=down" title="<?php echo _('Decrease Priority'); ?>"><span class="fa fa-arrow-down" style="font-size:11px;<?php echo $priColor; ?>"></span></a>
+                                <?php endif; ?>
                                 <?php } ?>
                                 
                                 <?php if($timeLeft > 0){ ?>
@@ -462,8 +518,26 @@ class Process {
 
                 <?php
                 } // end foreach groupedData
-                ?><?php    
-                    
+                ?>
+                <div style="text-align:center;margin:15px 0;padding:10px;border-top:1px solid #ddd;">
+                <?php if ($completedCount > 0): ?>
+                    <a href="processes?action=completeAll" class="btn btn-success btn-small" style="margin:0 5px;">
+                        <i class="fa fa-check"></i> <?php echo sprintf(_('Complete All (%d)'), $completedCount); ?>
+                    </a>
+                <?php endif; ?>
+                <?php if ($activeCount > 0): ?>
+                    <a href="processes?action=pauseAll" class="btn btn-warning btn-small" style="margin:0 5px;">
+                        <i class="fa fa-pause"></i> <?php echo sprintf(_('Pause All (%d)'), $activeCount); ?>
+                    </a>
+                <?php endif; ?>
+                <?php if ($pausedCount > 0): ?>
+                    <a href="processes?action=resumeAll" class="btn btn-info btn-small" style="margin:0 5px;">
+                        <i class="fa fa-play"></i> <?php echo sprintf(_('Resume All (%d)'), $pausedCount); ?>
+                    </a>
+                <?php endif; ?>
+                </div>
+                <?php
+
             } else {
 
                 ?>
@@ -922,17 +996,19 @@ class Process {
 
             if($totalProcesses > 0){
 
-                // Priority-weighted share: high priority (2) counts as 2 units, normal (1) as 1
-                $totalWeight = 1; // new process starts at normal priority (1 unit)
+                // Priority weights: 1=low(1), 2=normal(4), 3=high(15) → ~5%/20%/75%
+                $priorityWeights = [1 => 1, 2 => 4, 3 => 15];
+                $totalWeight = $priorityWeights[2]; // new process starts at normal priority
                 for($i=0;$i<$totalProcesses;$i++){
-                    $totalWeight += max(1, (int)$pInfo[$i]['priority']);
+                    $p = min(3, max(1, (int)($pInfo[$i]['priority'] ?? 2)));
+                    $totalWeight += $priorityWeights[$p];
                 }
-                $newProcessUsage = (1 / $totalWeight) * 100; // new process gets normal weight
+                $newProcessUsage = ($priorityWeights[2] / $totalWeight) * 100;
 
                 for($i=0;$i<$totalProcesses;$i++){
 
-                    $weight = max(1, (int)$pInfo[$i]['priority']);
-                    $weightedUsage = ($weight / $totalWeight) * 100;
+                    $p = min(3, max(1, (int)($pInfo[$i]['priority'] ?? 2)));
+                    $weightedUsage = ($priorityWeights[$p] / $totalWeight) * 100;
                     $additionalTime = ($pInfo[$i]['ptimeideal']*100)/$weightedUsage - $pInfo[$i]['pduration'];
 
                     $this->session->newQuery();
@@ -1108,14 +1184,17 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                 continue;
             }
 
-            // Priority-weighted share: high priority (2) counts as 2 units, normal (1) as 1 unit
+            // Priority weights: 1=low(1), 2=normal(4), 3=high(15) → ~5%/20%/75%
+            $priorityWeights = [1 => 1, 2 => 4, 3 => 15];
             $totalWeight = 0;
             foreach ($active as $proc) {
-                $totalWeight += max(1, (int)$proc['priority']);
+                $p = min(3, max(1, (int)($proc['priority'] ?? 2)));
+                $totalWeight += $priorityWeights[$p];
             }
 
             foreach ($active as $proc) {
-                $weight = max(1, (int)$proc['priority']);
+                $p = min(3, max(1, (int)($proc['priority'] ?? 2)));
+                $weight = $priorityWeights[$p];
                 $newUsage = ($weight / $totalWeight) * 100;
                 $newTotal = $proc['ptimeideal'] / ($newUsage / 100);
                 $newRemaining = max(1, round($newTotal - $proc['elapsed']));
@@ -1128,15 +1207,89 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
         }
     }
 
+    /**
+     * Auto-complete simple processes that don't require user interaction.
+     * Currently handles: Edit Log (action 8).
+     */
+    public function autoCompleteSimple($uid) {
+        // Find completed E_LOG and FORMAT processes for this user
+        $autoCompleteTypes = [8, 10]; // E_LOG=8, FORMAT=10 — simple DB operations
+        $stmt = $this->pdo->prepare(
+            "SELECT pid, paction, pinfo, pvictimid, pnpc, plocal, pcreatorid
+             FROM processes
+             WHERE pcreatorid = :uid
+             AND paction IN (" . implode(',', $autoCompleteTypes) . ")
+             AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) <= 0
+             AND isPaused = 0"
+        );
+        $stmt->execute([':uid' => $uid]);
+        $completedProcs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($completedProcs) == 0) return;
+
+        $log = new LogVPC();
+
+        foreach ($completedProcs as $proc) {
+            $pid = $proc['pid'];
+            $pAction = $proc['paction'];
+            $pInfo = $proc['pinfo'];
+            $pLocal = $proc['plocal'];
+            $pVictimID = $proc['pvictimid'];
+            $pNPC = $proc['pnpc'];
+            $pCreatorID = $proc['pcreatorid'];
+
+            if ($pAction == 8) {
+                // Replicate E_LOG completion logic from completeProcess
+                if ($pLocal == '1') {
+                    $vid = $pCreatorID;
+                } else {
+                    $vid = $pVictimID;
+                }
+
+                if ($pInfo != '') {
+                    $newLog = $log->getTmpLog($pInfo);
+                    $log->deleteTmpLog($pInfo);
+                } else {
+                    $newLog = '';
+                }
+
+                $this->session->newQuery();
+                $sql = "UPDATE log
+                        SET text = :newLog
+                        WHERE userID = :uid AND isNPC = :npc
+                        LIMIT 1";
+                $updateStmt = $this->pdo->prepare($sql);
+                $updateStmt->execute(array(':newLog' => $newLog, ':uid' => $vid, ':npc' => $pNPC));
+
+                $this->session->exp_add('EDIT_LOG', Array($pLocal));
+
+                $notifMsg = _('Edit log completed (auto)');
+            } elseif ($pAction == 10) {
+                // FORMAT has no side effects in completeProcess — just a timer
+                $notifMsg = _('Format completed (auto)');
+            }
+
+            // Send notification
+            require_once BASE_PATH . 'classes/Notification.class.php';
+            Notification::send($uid, 'system', $notifMsg, 'processes');
+
+            // Delete the process and release resources
+            self::deleteProcess($pid, false);
+        }
+
+        // Redistribute resources after auto-completing
+        self::redistributeCompleted($uid);
+    }
+
     public function resourceableInfo($action){
-        
+
         $return = Array();
         $return['COLUMN_ACTIVE'] = 'cpuUsage';
         $return['COLUMN_INACTIVE'] = 'netUsage';
         $return['IS_RES'] = '0';
-        
+
         switch($action){
-            
+
             case 1:
             case 2:
                 $return['COLUMN_ACTIVE'] = 'netUsage';
@@ -1757,17 +1910,28 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                     <div class="percent"></div>
                     <div class="pbar"></div>
                     <div class="elapsed"></div>
-                </div>                
-                
+                </div>
+
+                <?php if ($this->pTimeLeft > 0): ?>
+                    <div style="text-align:center;font-size:11px;color:#999;margin-top:2px;">
+                        <?php
+                        $mins = floor(abs($this->pTimeLeft) / 60);
+                        $secs = abs($this->pTimeLeft) % 60;
+                        echo $mins > 0 ? $mins . 'm ' . $secs . 's' : $secs . 's';
+                        echo ' ' . _('remaining');
+                        ?>
+                    </div>
+                <?php endif; ?>
+
                 <?php
 
             }
-        
+
         } else {
             echo 'Process paused';
             $_SESSION['pLoad'] = 'p';
         }
-        
+
         ?>
                 
                 </div>
@@ -1820,15 +1984,32 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
                     </div>
                     <div class="span6"  style="text-align: right;">  
 
-                <?php if($link != ''){ ?>
-                <span class="he16-cog heicon"></span> <!-- Usar a variável $link para o priority, se for '' não precisa mudar, se for diferente mostra o modal -->   
+                <?php if($link != ''){
+                    $pdo_pri = PDO_DB::factory();
+                    $stmtPri = $pdo_pri->prepare("SELECT priority FROM processes WHERE pid = ? LIMIT 1");
+                    $stmtPri->execute([$this->pID]);
+                    $pri = (int)($stmtPri->fetchColumn() ?: 2);
+                    $priLabel = $pri == 3 ? 'HIGH' : ($pri == 1 ? 'LOW' : '');
+                    $priColor = $pri == 3 ? 'color:#259D1C;' : ($pri == 1 ? 'color:#BA1E20;' : '');
+                ?>
+                <?php if($pri < 3): ?>
+                    <a href="processes?pid=<?php echo $this->pID; ?>&action=priority&dir=up" title="<?php echo _('Increase Priority'); ?>"><span class="fa fa-arrow-up" style="font-size:11px;<?php echo $priColor; ?>"></span></a>
+                <?php endif; ?>
+                <?php if($priLabel): ?>
+                    <span style="font-size:9px;font-weight:bold;<?php echo $priColor; ?>"><?php echo $priLabel; ?></span>
+                <?php endif; ?>
+                <?php if($pri > 1): ?>
+                    <a href="processes?pid=<?php echo $this->pID; ?>&action=priority&dir=down" title="<?php echo _('Decrease Priority'); ?>"><span class="fa fa-arrow-down" style="font-size:11px;<?php echo $priColor; ?>"></span></a>
+                <?php endif; ?>
                 <?php } ?>
 
-                <?php if($isPaused == 1){ ?>
-                    <a href="processes?pid=<?php echo $this->pID; ?>&action=resume"><span class="he16-play heicon"></span></a>
-                <?php } else { ?>
-                    <a href="processes?pid=<?php echo $this->pID; ?>&action=pause"><span class="he16-pause heicon"></span></a>
-                <?php } ?> 
+                <?php if($this->pTimeLeft > 0): ?>
+                    <?php if($isPaused == 1){ ?>
+                        <a href="processes?pid=<?php echo $this->pID; ?>&action=resume"><span class="he16-play heicon"></span></a>
+                    <?php } else { ?>
+                        <a href="processes?pid=<?php echo $this->pID; ?>&action=pause"><span class="he16-pause heicon"></span></a>
+                    <?php } ?>
+                <?php endif; ?>
                 <a href="processes?pid=<?php echo $this->pID; ?>&del=1"><span class="he16-cancel heicon"></span></a><br/>
                           
                     </div>
@@ -3923,11 +4104,21 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
 
             }
 
+            // Send notification on process completion
+            require_once BASE_PATH . 'classes/Notification.class.php';
+            $procActionName = self::getProcAction($this->pAction);
+            if ($this->pSoftID != '0' && $issetSoft == 1) {
+                $notifDesc = $procActionName . ' completed: ' . $softInfo->softname . $this->software->getExtension($softInfo->softtype);
+            } else {
+                $notifDesc = $procActionName . ' completed';
+            }
+            Notification::send($this->pCreatorID, 'system', $notifDesc, 'processes');
+
             self::deleteProcess($this->pID);
 
         } else {
                 die("Process not yet done");
-        }               
+        }
 
     }
 
@@ -3981,8 +4172,9 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
         
     }
     
-    public function togglePriority($pid){
+    public function togglePriority($pid, $direction = 'up'){
 
+        // Priority: 1=low, 2=normal (default), 3=high
         $this->session->newQuery();
         $sql = "SELECT priority, pAction, pCreatorID, TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) AS pTimeLeft
                 FROM processes WHERE pid = :pid LIMIT 1";
@@ -3994,8 +4186,15 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
             return;
         }
 
-        // Toggle: 1 (normal) -> 2 (high), 2 (high) -> 1 (normal)
-        $newPriority = ($proc->priority > 1) ? 1 : 2;
+        $direction = $direction ?? 'up';
+        $cur = (int)$proc->priority;
+        if ($direction === 'up') {
+            $newPriority = min(3, $cur + 1);
+        } else {
+            $newPriority = max(1, $cur - 1);
+        }
+
+        if ($newPriority == $cur) return;
 
         $this->session->newQuery();
         $sql = "UPDATE processes SET priority = :priority WHERE pid = :pid LIMIT 1";
@@ -4003,7 +4202,40 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
         $stmt->execute([':priority' => $newPriority, ':pid' => $pid]);
 
         // Redistribute to apply new priority weights
-        self::redistributeCompleted($proc->pcreatorid);
+        self::redistributeActive($proc->pcreatorid);
+    }
+
+    /**
+     * Redistribute resources among ALL active processes based on priority weights.
+     * Called after priority change (not just after completion).
+     */
+    public function redistributeActive($uid) {
+        $priorityWeights = [1 => 1, 2 => 4, 3 => 15];
+        foreach (['netUsage', 'cpuUsage'] as $column) {
+            $stmt = $this->pdo->prepare(
+                "SELECT pid, $column as share, pTimeIdeal, priority, TIMESTAMPDIFF(SECOND, pTimeStart, NOW()) AS elapsed
+                 FROM processes WHERE pCreatorID = :uid AND $column > 0
+                 AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) > 0 AND isPaused = 0"
+            );
+            $stmt->execute([':uid' => $uid]);
+            $active = $stmt->fetchAll();
+            if (count($active) < 2) continue;
+
+            $totalWeight = 0;
+            foreach ($active as $proc) {
+                $p = min(3, max(1, (int)($proc['priority'] ?? 2)));
+                $totalWeight += $priorityWeights[$p];
+            }
+
+            foreach ($active as $proc) {
+                $p = min(3, max(1, (int)($proc['priority'] ?? 2)));
+                $newUsage = ($priorityWeights[$p] / $totalWeight) * 100;
+                $newTotal = $proc['ptimeideal'] / ($newUsage / 100);
+                $newRemaining = max(1, round($newTotal - $proc['elapsed']));
+                $this->pdo->prepare("UPDATE processes SET $column = :usage, pTimeEnd = DATE_ADD(NOW(), INTERVAL :rem SECOND) WHERE pid = :pid")
+                    ->execute([':usage' => $newUsage, ':rem' => $newRemaining, ':pid' => $proc['pid']]);
+            }
+        }
     }
 
     public function resumeProcess($pid){
@@ -4097,6 +4329,15 @@ if($this->pAction == 27){ $replace = TRUE; $newTime = 300 - $pInfo[$i]['pduratio
         if ($hwValue <= 0) {
             return $baseTime;
         }
+
+        // CPU penalty if contributing to clan research (50% effective CPU)
+        if ($hwType === 'CPU') {
+            require_once BASE_PATH . 'classes/ClanResearch.class.php';
+            if (ClanResearch::isContributing($_SESSION['id'])) {
+                $hwValue = (int)($hwValue * 0.5);
+            }
+        }
+
         return $baseTime * (1000 / (1000 + $hwValue));
     }
 

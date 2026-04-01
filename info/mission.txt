@@ -5,6 +5,9 @@ mission types:
 3 - bank check acc 3.0
 4 - bank TRANSFER 5.0
 5 - ddos 20.0
+6 - spy/collect intel 2.5 (money rate)
+7 - upload virus 4.0
+8 - research race 6.0
 
 
 50 - Desenvolveu CRC X => Hack NSA, DL doom, (Install doom);

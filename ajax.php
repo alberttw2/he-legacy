@@ -1013,9 +1013,16 @@ if($session->issetLogin() || $loggedOut){
                 
                 $totalMoney = $finances->totalMoney();
                 
-                $title = _('Upgrade ').strtoupper($opts['part']);
-                
-                $text = sprintf(_('Are you sure you want to buy %s for %s<strong>$%s</strong></span>?'), strtoupper($opts['part']), '<span class=\"red\">', number_format($opts['price']));
+                if($opts['part'] == 'nettype'){
+                    $lineTypeNames = [0 => 'Asymmetric', 1 => 'Symmetric', 2 => 'Dedicated Fiber'];
+                    $partLabel = 'Line Type: ' . ($lineTypeNames[(int)($opts['id'] ?? 0)] ?? 'Unknown');
+                } else {
+                    $partLabel = strtoupper($opts['part']);
+                }
+
+                $title = _('Upgrade ').$partLabel;
+
+                $text = sprintf(_('Are you sure you want to buy %s for %s<strong>$%s</strong></span>?'), $partLabel, '<span class=\"red\">', number_format($opts['price']));
                 
                 $text .= '<br/><br/>';
                 
@@ -1618,17 +1625,16 @@ if($session->issetLogin() || $loggedOut){
                 
                 }
 
-                $return = '';
-                $prevType = 0;
-                $times = 0;
-                $strPlace = 0;
-                $added = 0;
-                $i = 0;
-                $tagStart = $tagEnd = '';
+                // Build software list as proper JSON using json_encode
+                $groups = [];
+                $missionEntry = null;
+                $prevType = -1;
+                $currentGroup = null;
+
                 while($softInfo = $data->fetch(PDO::FETCH_OBJ)){
 
                     $valid = 1;
-                    if($softInfo->softhidden == 1){
+                    if(($softInfo->softhidden ?? 0) == 1){
                         $valid = 0;
                     } elseif($softInfo->softtype == 19 || $softInfo->softtype == 26 || $softInfo->softtype == 31 || $softInfo->softtype >= 90){
                         $valid = 0;
@@ -1636,69 +1642,50 @@ if($session->issetLogin() || $loggedOut){
 
                     if($valid == 1){
 
+                        $isMissionItem = false;
                         if(!$isExternal && !$isFolder){
-                            if($pertinentID == $softInfo->id){
-                                if(($_SESSION['LOGGED_IN'] ?? null) == $pertinentIP){
+                            if(isset($pertinentID) && $pertinentID == $softInfo->id){
+                                if(($_SESSION['LOGGED_IN'] ?? null) == ($pertinentIP ?? null)){
                                     $result['redirect'] = $softInfo->id;
-                                    $tagStart = '<span class=\"red\"><strong>';
-                                    $tagEnd = '</strong></span>';
+                                    $isMissionItem = true;
                                 }
                             }
                         }
 
-                        $softName = $tagStart.$softInfo->softname.$software->getExtension($softInfo->softtype);
+                        $softName = $softInfo->softname . $software->getExtension($softInfo->softtype);
                         if($softInfo->softtype != 30){
                             $softName .= ' ('.$software->dotVersion($softInfo->softversion).')';
                         }
-                        $softName .= $tagEnd;
-                        
-                        
-                        if($softInfo->softtype == $prevType){
 
-                            $return .= ',{"id":"'.$softInfo->id.'","text":"'.$softName.'"}';
-
-                            $times++;
-                            
-                        } else {
-
-                            if($times == 0 && $prevType != ''){
-                                $i++;
-                            }
-
-                            if($prevType != ''){
-                                $return .= ']},';
-                            }
-
-                            $strPlace = strlen($return);
-                            $return .= '{"text":"'._($software->int2stringSoftwareType($softInfo->softtype)).'","children":[{';
-                            $return .= '"id":"'.$softInfo->id.'","text":"'.$softName.'"}';
-
-                            $times = 0;
-                            $added = strlen($return) - $strPlace;
-                            
+                        if($isMissionItem){
+                            $softName = '<span class="red"><strong>' . $softName . '</strong></span>';
+                            $missionEntry = ['id' => (string)$softInfo->id, 'text' => $softName];
                         }
 
+                        if($softInfo->softtype != $prevType){
+                            if($currentGroup !== null){
+                                $groups[] = $currentGroup;
+                            }
+                            $currentGroup = [
+                                'text' => _($software->int2stringSoftwareType($softInfo->softtype)),
+                                'children' => []
+                            ];
+                        }
+
+                        $currentGroup['children'][] = ['id' => (string)$softInfo->id, 'text' => $softName];
                         $prevType = $softInfo->softtype;
-
-                        if($tagStart != ''){ //is mission
-
-                            $aux = $return;
-                            $return = '{"text":"'._('Mission').'","children":[{"id":"'.$softInfo->id.'","text":"'.$softName.'"}]},'.$aux;
-
-                            $tagStart = $tagEnd = '';
-                            
-                        }                    
-
                     }
-
                 }
 
-                $aux = $return;
-                $return = '['.$aux;
+                if($currentGroup !== null){
+                    $groups[] = $currentGroup;
+                }
 
-                $return .= ']}]';
+                if($missionEntry){
+                    array_unshift($groups, ['text' => _('Mission'), 'children' => [$missionEntry]]);
+                }
 
-                $result['msg'] = $return;
+                $result['msg'] = json_encode($groups);
 
                 break;
             case 'loadHistory':

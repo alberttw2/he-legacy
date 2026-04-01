@@ -2249,3 +2249,82 @@ table img {
 .credit-sole a, .credit-right a {
     color: #000;
 }
+
+/* === Visual Improvements === */
+
+/* 2.1 - Sidebar active item highlight */
+#sidebar > ul > li.active > a,
+#sidebar > ul > li > a.active {
+    border-left: 3px solid #259D1C;
+    background: rgba(37, 157, 28, 0.1);
+}
+
+/* 2.2 - Better alert/message styling */
+.alert {
+    border-radius: 4px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border: 1px solid transparent;
+}
+.alert-info {
+    background: rgba(74, 142, 194, 0.15);
+    border-color: rgba(74, 142, 194, 0.3);
+    color: #4A8EC2;
+}
+.alert-success {
+    background: rgba(37, 157, 28, 0.15);
+    border-color: rgba(37, 157, 28, 0.3);
+}
+.alert-error {
+    background: rgba(186, 30, 32, 0.15);
+    border-color: rgba(186, 30, 32, 0.3);
+}
+
+/* 2.3 - Process bar color coding */
+.pbar { transition: width 1s linear; }
+
+/* 2.4 - Better table row hover */
+.table-hover tbody tr:hover {
+    background-color: rgba(37, 157, 28, 0.08) !important;
+    transition: background-color 0.2s;
+}
+
+/* 2.5 - Notification badge pulse animation */
+.notification-bell .badge {
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* 2.6 - Button hover effects */
+.btn {
+    transition: all 0.2s ease;
+}
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* 2.7 - Widget box subtle shadow */
+.widget-box {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* 2.8 - Software type icons color coding */
+.he16-1 { filter: hue-rotate(0deg); }     /* Cracker - red */
+.he16-2 { filter: hue-rotate(120deg); }   /* Hasher - green */
+.he16-4 { filter: hue-rotate(240deg); }   /* Firewall - blue */
+
+/* 2.10 - Theme selector styling */
+#theme-selector {
+    background: #333;
+    color: #ccc;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-size: 11px;
+}

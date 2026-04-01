@@ -1138,7 +1138,7 @@ if(($_SESSION['CLAN_ID'] ?? 0) != 0){
 
 //02-20 08:16 pm
 
-$clock = date('Y-m-d H:i');
+$clock = date('H:i:s d/m/y');
 
 ?>
 <!DOCTYPE html>
@@ -1272,6 +1272,69 @@ if($css['fa'] == 1){
         <div id="content">
             <div id="content-header">
                 <h1><?php echo _($sub); ?></h1>
+
+                <?php
+                // Software versions for header
+                $softVersionsPdo = PDO_DB::factory();
+                $softRow1 = [1=>'CRC', 2=>'HASH', 4=>'FWL', 13=>'FTP', 14=>'SSH'];
+                $softRow2 = [5=>'HID', 6=>'SEK', 11=>'COL', 8=>'SPAM', 9=>'WAREZ'];
+                $allTypes = $softRow1 + $softRow2;
+                $svStmt = $softVersionsPdo->prepare(
+                    "SELECT softType, MAX(softVersion) as bestVer FROM software
+                     WHERE userID = :uid AND isNPC = 0 AND softType IN (" . implode(',', array_keys($allTypes)) . ")
+                     GROUP BY softType ORDER BY softType"
+                );
+                $svStmt->execute([':uid' => $_SESSION['id']]);
+                $playerSoftVersions = $svStmt->fetchAll(PDO::FETCH_ASSOC);
+                $softMap = [];
+                foreach ($playerSoftVersions as $sv) {
+                    $softMap[(int)$sv['softtype']] = $sv['bestver'];
+                }
+                ?>
+                <div class="header-software hide-phone" style="position:absolute;left:50%;transform:translateX(-50%);top:1px;text-align:center;">
+                    <div style="display:flex;gap:5px;justify-content:center;margin-bottom:2px;">
+                    <?php foreach ($softRow1 as $sType => $sLabel):
+                        $ver = isset($softMap[$sType]) ? floor($softMap[$sType]/10) . '.' . ($softMap[$sType]%10) : '-';
+                        $hasIt = isset($softMap[$sType]);
+                    ?>
+                        <span style="background:<?php echo $hasIt ? 'rgba(37,157,28,0.15)' : 'rgba(100,100,100,0.15)'; ?>;border:1px solid <?php echo $hasIt ? 'rgba(37,157,28,0.3)' : 'rgba(100,100,100,0.3)'; ?>;border-radius:3px;padding:2px 7px;font-size:11px;color:<?php echo $hasIt ? '#259D1C' : '#666'; ?>;font-family:monospace;white-space:nowrap;" title="<?php echo $sLabel; ?> v<?php echo $ver; ?>"><?php echo $sLabel; ?>:<strong><?php echo $ver; ?></strong></span>
+                    <?php endforeach; ?>
+                    </div>
+                    <div style="display:flex;gap:5px;justify-content:center;">
+                    <?php foreach ($softRow2 as $sType => $sLabel):
+                        $ver = isset($softMap[$sType]) ? floor($softMap[$sType]/10) . '.' . ($softMap[$sType]%10) : '-';
+                        $hasIt = isset($softMap[$sType]);
+                    ?>
+                        <span style="background:<?php echo $hasIt ? 'rgba(37,157,28,0.15)' : 'rgba(100,100,100,0.15)'; ?>;border:1px solid <?php echo $hasIt ? 'rgba(37,157,28,0.3)' : 'rgba(100,100,100,0.3)'; ?>;border-radius:3px;padding:2px 7px;font-size:11px;color:<?php echo $hasIt ? '#259D1C' : '#666'; ?>;font-family:monospace;white-space:nowrap;" title="<?php echo $sLabel; ?> v<?php echo $ver; ?>"><?php echo $sLabel; ?>:<strong><?php echo $ver; ?></strong></span>
+                    <?php endforeach; ?>
+                    </div>
+                    <?php
+                    // CPU and NET usage indicators
+                    $usagePdo = PDO_DB::factory();
+                    $cpuUsage = $usagePdo->prepare("SELECT COALESCE(SUM(cpuUsage), 0) FROM processes WHERE pCreatorID = ? AND isPaused = 0 AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) > 0");
+                    $cpuUsage->execute([$_SESSION['id']]);
+                    $cpuPct = min(100, round((float)$cpuUsage->fetchColumn()));
+
+                    // Download = pAction 1 (download), Upload = pAction 2 (upload)
+                    $dlUsage = $usagePdo->prepare("SELECT COALESCE(SUM(netUsage), 0) FROM processes WHERE pCreatorID = ? AND pAction = 1 AND isPaused = 0 AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) > 0");
+                    $dlUsage->execute([$_SESSION['id']]);
+                    $dlPct = min(100, round((float)$dlUsage->fetchColumn()));
+
+                    $ulUsage = $usagePdo->prepare("SELECT COALESCE(SUM(netUsage), 0) FROM processes WHERE pCreatorID = ? AND pAction = 2 AND isPaused = 0 AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) > 0");
+                    $ulUsage->execute([$_SESSION['id']]);
+                    $ulPct = min(100, round((float)$ulUsage->fetchColumn()));
+
+                    $cpuColor = $cpuPct > 80 ? '#BA1E20' : ($cpuPct > 50 ? '#f0ad4e' : '#259D1C');
+                    $dlColor = $dlPct > 80 ? '#BA1E20' : ($dlPct > 50 ? '#f0ad4e' : '#259D1C');
+                    $ulColor = $ulPct > 80 ? '#BA1E20' : ($ulPct > 50 ? '#f0ad4e' : '#259D1C');
+                    ?>
+                    <div style="display:flex;gap:6px;justify-content:center;margin-top:2px;">
+                        <span style="background:rgba(0,0,0,0.2);border:1px solid <?php echo $cpuColor; ?>;border-radius:3px;padding:1px 6px;font-size:10px;color:<?php echo $cpuColor; ?>;font-family:monospace;" title="CPU Usage">CPU:<strong><?php echo $cpuPct; ?>%</strong></span>
+                        <span style="background:rgba(0,0,0,0.2);border:1px solid <?php echo $dlColor; ?>;border-radius:3px;padding:1px 6px;font-size:10px;color:<?php echo $dlColor; ?>;font-family:monospace;" title="Download Usage">DL:<strong><?php echo $dlPct; ?>%</strong></span>
+                        <span style="background:rgba(0,0,0,0.2);border:1px solid <?php echo $ulColor; ?>;border-radius:3px;padding:1px 6px;font-size:10px;color:<?php echo $ulColor; ?>;font-family:monospace;" title="Upload Usage">UL:<strong><?php echo $ulPct; ?>%</strong></span>
+                    </div>
+                </div>
+
                 <div class="header-ip hide-phone">
                     <div style="text-align: right;">
                         <span class="header-ip-show"></span>

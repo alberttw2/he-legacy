@@ -208,7 +208,28 @@ static $netItens = Array(
         'DESC' => '...',
         'POW' => '1000',
         'PRICE' => '100000'
-    ),	         
+    ),
+
+    '11' => Array(
+        'NAME' => 'HYPER2000',
+        'DESC' => '2 Gbps fiber connection',
+        'POW' => '2000',
+        'PRICE' => '2500000'
+    ),
+
+    '12' => Array(
+        'NAME' => 'HYPER5000',
+        'DESC' => '5 Gbps fiber connection',
+        'POW' => '5000',
+        'PRICE' => '7500000'
+    ),
+
+    '13' => Array(
+        'NAME' => 'HYPER10000',
+        'DESC' => '10 Gbps fiber connection',
+        'POW' => '10000',
+        'PRICE' => '20000000'
+    ),
 
 );
 

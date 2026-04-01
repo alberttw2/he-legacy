@@ -3754,13 +3754,15 @@ if($bankAcc == ''){
         if(isset($_POST['clan'])){
             $hardware = new HardwareVPC();
             $hardware->handlePost();
+            return;
         } elseif(isset($_POST['act'])){
             $software = new SoftwareVPC();
             $software->handlePost('internet');
+            return;
         }
-        
+
         $system = new System();
-        
+
         $redirect = 'internet';
 
         if(!isset($_POST['int-act'])){

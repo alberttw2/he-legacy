@@ -40,12 +40,13 @@ class HardwareVPC extends Player {
         }
 
         $this->session->newQuery();
-        $sqlSelect = "  SELECT 
-                            COUNT(*) AS total, 
-                            SUM(cpu) AS cpu, 
-                            SUM(hdd) AS hdd,  
-                            SUM(ram) AS ram, 
-                            net
+        $sqlSelect = "  SELECT
+                            COUNT(*) AS total,
+                            SUM(cpu) AS cpu,
+                            SUM(hdd) AS hdd,
+                            SUM(ram) AS ram,
+                            net,
+                            netType
                         FROM hardware
                         WHERE hardware.userID = $id AND isNPC = $npc";
         $hardwareInfo = $this->pdo->query($sqlSelect)->fetch(PDO::FETCH_OBJ);
@@ -60,13 +61,14 @@ class HardwareVPC extends Player {
         $totalHDD = $hardwareInfo->hdd;
         $totalRAM = $hardwareInfo->ram;
         $totalNET = $hardwareInfo->net;
+        $netType = (int)($hardwareInfo->netType ?? 0);
 
         $this->session->newQuery();
         $sqlSelect = "  SELECT SUM(size) AS xhd
                         FROM hardware_external
                         WHERE userID = $id";
         $totalXHD = $this->pdo->query($sqlSelect)->fetch(PDO::FETCH_OBJ)->xhd;
-        
+
         $values = Array(
 
             'CPU' => $totalCPU,
@@ -74,6 +76,7 @@ class HardwareVPC extends Player {
             'RAM' => $totalRAM,
             'NET' => $totalNET,
             'XHD' => $totalXHD,
+            'NET_TYPE' => $netType,
 
         );
 
@@ -325,46 +328,56 @@ class HardwareVPC extends Player {
     }
     
     public function getNetSpec($id, $pcType){
-        
+
         if($id == ''){
             $id = $_SESSION['id'];
         }
-        
+
         $npc = '0';
         if($pcType == 'NPC'){
             $npc = '1';
         }
-        
+
         $this->session->newQuery();
-        $sql = "SELECT net FROM hardware WHERE userID = '".$id."' AND isNPC = $npc LIMIT 1";
-        
+        $sql = "SELECT net, netType FROM hardware WHERE userID = '".$id."' AND isNPC = $npc LIMIT 1";
+
         return $this->pdo->query($sql)->fetch(PDO::FETCH_OBJ);
-        
+
     }
     
-    public function getInternetRates($speed){
-        
+    public function getInternetRates($speed, $netType = 0){
+
         $speed *= 1000;
-        
+
         $return = Array();
-        
-        $return['download'] = $speed / 8;
-        $return['upload'] = $speed / 16;
-        
+
+        // Download rate based on netType
+        switch($netType) {
+            case 2:  $return['download'] = $speed / 6; break; // dedicated fiber
+            default: $return['download'] = $speed / 8; break; // asym & sym same download
+        }
+
+        // Upload rate based on netType
+        switch($netType) {
+            case 1:  $return['upload'] = $speed / 8; break;  // symmetric
+            case 2:  $return['upload'] = $speed / 6; break;  // dedicated fiber
+            default: $return['upload'] = $speed / 16; break; // asymmetric
+        }
+
         if($return['download'] >= 1000){
             $return['downloadstr'] = round(($return['download']/1000), 2) .'MB/s';
         } else {
             $return['downloadstr'] = round($return['download'], 2) .'kB/s';
         }
-        
+
         if($return['upload'] >= 1000){
             $return['uploadstr'] = round(($return['upload']/1000), 2) .'MB/s';
         } else {
             $return['uploadstr'] = round($return['upload'], 2) .'kB/s';
         }
-        
+
         return $return;
-        
+
     }
     
     public function getTotalPCs($id = '', $pcType = '') {
@@ -560,14 +573,18 @@ class HardwareVPC extends Player {
     }
 
     public function handlePost(){
-                
+
         $system = new System();
 
         if(isset($_POST['act']) && isset($_POST['price'])){
-        
+
             $type = 'buy';
-            
-            if(isset($_POST['clan'])){
+
+            // Debug to file
+
+            // Determine if this is a clan buy
+            $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+            if(isset($_POST['clan']) && strpos($requestUri, 'internet') !== false){
                 $isClan = 1;
             } else {
                 $isClan = 0;
@@ -968,6 +985,40 @@ class HardwareVPC extends Player {
                                         
                     break;
 
+                case 'nettype':
+
+                    $newType = (int)$_POST['part-id'];
+                    if($newType < 0 || $newType > 2){
+                        $system->handleError('Invalid line type.', 'hardware?opt=net');
+                    }
+
+                    $lineTypePrices = [0 => 0, 1 => 50000, 2 => 200000];
+                    $price = $lineTypePrices[$newType];
+
+                    $currentTypeQ = $this->pdo->prepare("SELECT netType FROM hardware WHERE userID = ? AND isNPC = 0 LIMIT 1");
+                    $currentTypeQ->execute([$_SESSION['id']]);
+                    $currentType = (int)$currentTypeQ->fetchColumn();
+
+                    if($newType <= $currentType){
+                        $system->handleError('You already have this line type or better.', 'hardware?opt=net');
+                    }
+
+                    $accInfo = self::handlePostCommon($acc, $price, 'hardware?opt=net');
+
+                    $updateStmt = $this->pdo->prepare("UPDATE hardware SET netType = ? WHERE userID = ? AND isNPC = 0");
+                    $updateStmt->execute([$newType, $_SESSION['id']]);
+
+                    $finances = new Finances();
+                    $finances->debtMoney($price, $acc);
+
+                    $lineTypeNames = [0 => 'Asymmetric', 1 => 'Symmetric', 2 => 'Dedicated Fiber'];
+                    $this->session->addMsg('Line type upgraded to ' . $lineTypeNames[$newType] . '.', 'success');
+
+                    $log = new LogVPC();
+                    $log->addLog($_SESSION['id'], $log->logText('BUY_HARDWARE', Array(0, 'nettype', $lineTypeNames[$newType], $price, $acc, long2ip($finances->getBankIP($accInfo['0']['bankid'])), '')), 0);
+
+                    break;
+
                 default:
                     die("Invalid action");
                     break;
@@ -1247,19 +1298,22 @@ class HardwareVPC extends Player {
                     
                     ?>
 
-                    <form action="#buy" method="GET">
+                    <form action="<?php echo ($internet == 1) ? 'internet' : 'hardware'; ?>" method="POST"
+                          onsubmit="return confirm('<?php echo sprintf(_('Are you sure you want to buy this server for $%s?'), number_format($price)); ?>');">
 
-                        <?php echo $input; ?>
-                        
+                        <input type="hidden" name="act" value="BUY-PC">
+                        <input type="hidden" name="price" value="<?php echo $price; ?>">
+                        <?php if($internet == 1): ?>
+                            <input type="hidden" name="clan" value="1">
+                        <?php endif; ?>
+
                         <?php echo _("Account #"); ?>: <?php echo $finances->htmlSelectBankAcc(); ?><br/><br/>
 
-                        <input type="submit" class="btn btn-success" value="<?php echo _("Buy"); ?>...">
+                        <input type="submit" class="btn btn-success" value="<?php echo _("Buy Server"); ?>">
 
                     </form>
 
                     <?php
-                    
-                    self::showBuyModal('server', $price, $internet);
                     
                 } else {
                     echo _('You dont have enough money');
@@ -1499,17 +1553,75 @@ class HardwareVPC extends Player {
                 }
 
                 $_SESSION['CUR_PC'] = '0';
-                
+
                 ?>
-                
+
                         </tbody>
                     </table>
-                    
+
                     </div>
                 </div>
-                        
+
+                <div class="widget-box text-left" style="margin-top:20px;">
+                    <div class="widget-title">
+                        <span class="icon"><span class="he16-internet"></span></span>
+                        <h5><?php echo _("Line Type"); ?></h5>
+                    </div>
+                    <div class="widget-content nopadding">
                 <?php
-                
+
+                $currentType = (int)($netInfo->netType ?? 0);
+                $lineTypes = [
+                    0 => ['name' => 'Asymmetric (Standard)', 'desc' => 'Download: full speed / Upload: half speed', 'price' => 0],
+                    1 => ['name' => 'Symmetric', 'desc' => 'Download &amp; Upload: full speed', 'price' => 50000],
+                    2 => ['name' => 'Dedicated Fiber', 'desc' => 'Download &amp; Upload: 33% faster than standard', 'price' => 200000],
+                ];
+
+                ?>
+                        <table class="table table-bordered table-striped table-hardware table-hover">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th><?php echo _("Type"); ?></th>
+                                    <th><?php echo _("Description"); ?></th>
+                                    <th><?php echo _("Price"); ?></th>
+                                    <th><?php echo _("Action"); ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                <?php
+
+                foreach($lineTypes as $typeID => $typeInfo) {
+                    $typeName = $typeInfo['name'];
+                    $typeDesc = $typeInfo['desc'];
+
+                    if($typeID <= $currentType) {
+                        $typePrice = '';
+                        $typeBuy = ($typeID == $currentType) ? '<span class="label label-success">Current</span>' : '';
+                    } else {
+                        $typePrice = '$<span id="price">'.number_format($typeInfo['price']).'</span>';
+                        $typeBuy = '<span class="he16-buy_hardware icon-tab tip-top upgrade-nettype link" title="Buy" id="'.$typeID.'" value="nettype"></span>';
+                    }
+
+                    ?>
+                                <tr>
+                                    <td><span class="he16-internet"></span></td>
+                                    <td><?php echo $typeName; ?></td>
+                                    <td><?php echo $typeDesc; ?></td>
+                                    <td><font color="green"><?php echo $typePrice; ?></font></td>
+                                    <td><?php echo $typeBuy; ?></td>
+                                </tr>
+                    <?php
+                }
+
+                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <?php
+
                 break;
                 
         }
@@ -1593,7 +1705,7 @@ class HardwareVPC extends Player {
                             <p><?php echo sprintf(_('Are you sure you want to buy this new %s for %s<strong>$%s</strong></span>?'), _($spec), '<span class="red">', number_format($price)); ?></p>
                     </div>
                     <div class="modal-footer">
-                        <form action="#" method="POST">
+                        <form action="<?php echo ($internet == 1) ? 'internet' : 'hardware'; ?>" method="POST">
                             <?php echo $input; ?>
                             <input type="submit" value="<?php echo _('Yes, I want to buy it.'); ?>" class="btn btn-primary">
                             <a class="btn" href="<?php echo $cancelRedirect; ?>"><?php echo _('No, cancel'); ?></a>
@@ -2028,8 +2140,8 @@ class HardwareVPC extends Player {
     }
 
     public function addServer($specs, $internet = 0){
-        
-        if($internet != 0){
+
+        if($internet !== 0 && $internet !== '' && $internet !== null){
             
             $clan = new Clan();
             
@@ -2268,9 +2380,12 @@ class HardwareVPC extends Player {
         
         self::addServer($specs, $internet);
         $finances->debtMoney($stdPrice, $bankAcc);
-        
+
+        // Invalidate hardware cache so new CPU/NET totals are used
+        unset($_SESSION['hw_cache']);
+
         $this->session->exp_add('BUY', Array('pc', $numPCs + 1));
-        
+
     }
     
     public function buyXHD($bankAcc, $price, $total){
@@ -2364,7 +2479,7 @@ class HardwareVPC extends Player {
             $pc = 0;
         }
 
-        if($internet != 0){
+        if($internet !== 0 && $internet !== '' && $internet !== null){
             $userID = $internet;
             $pcType = 'NPC';
             $redirect = 'internet?view=clan';
@@ -2379,7 +2494,7 @@ class HardwareVPC extends Player {
         $oldSpecs = self::getPCSpec($pc, $pcType, $userID, $unknownID);
         $newPower = $itemInfo[$id]['POW'];
 
-        if($internet != 0 && $oldSpecs['ISSET'] == 0){
+        if($internet !== 0 && $internet !== '' && $internet !== null && $oldSpecs['ISSET'] == 0){
             //$this->session->addMsg('You can only upgrade YOUR clan server. Sorry.', 'error');
             //header("Location:internet");
             //exit();
@@ -2466,9 +2581,12 @@ class HardwareVPC extends Player {
 
         self::updateHardwareSpecs($pc, $userID, $pcType, $newPower, $part, $type);
         $finances->debtMoney($itemInfo[$id]['PRICE'], $bankAccount);
-        
-        $ranking->updateMoneyStats('1', $itemInfo[$id]['PRICE']);  
-        
+
+        $ranking->updateMoneyStats('1', $itemInfo[$id]['PRICE']);
+
+        // Invalidate hardware cache so new CPU/NET totals are used
+        unset($_SESSION['hw_cache']);
+
         $this->session->exp_add('BUY', Array('hardware', $itemInfo[$id]['PRICE']));
 
     }

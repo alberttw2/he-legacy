@@ -112,7 +112,7 @@ class Riddle {
             } elseif($puzzleID == 2){
                 $puzzleID = 27;
             } elseif($puzzleID == 3){
-                $puzzleID = 34;
+                $puzzleID = 38;
             } else {
                 $puzzleID = 38;
             }
@@ -125,7 +125,7 @@ class Riddle {
     private function showInfo(){
  
         if($this->puzzleInfo->next == 'TMPEND'){
-            echo '<div class="alert alert-warning center bold"><strong>This is the end of the riddle (for now). A new one is coming that will take you to the WHOIS 3.</strong> Have suggestions for new riddle? Mail us!</div>';
+            echo '<div class="alert alert-warning center bold"><strong>Congratulations! You\'ve completed all available puzzles. Check back for new challenges!</strong></div>';
         }
         
         $lastSolved = self::getLatestSolved();
@@ -482,10 +482,8 @@ if($this->puzzleInfo->credit){
             $nextKey = 'WHOIS/1';
         } elseif($this->puzzleID == 27){
             $nextKey = 'WHOIS/2';
-        } elseif($this->puzzleID == 34){
-            $nextKey = 'WHOIS/3';
         } elseif($this->puzzleID == 38){
-            $nextKey = 'WHOIS/4';
+            $nextKey = 'WHOIS/3';
         } elseif($this->puzzleID == 47){
             return ip2long('1.2.3.4');
         }

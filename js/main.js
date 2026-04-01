@@ -114,7 +114,7 @@ $(document).ready(function(){
     if($('body').hasClass('hardware')){
 
         $('.upgrade-part').on('click', function(){
-            
+
             var power = $(this).attr('id');
             var part = $(this).attr('value');
 
@@ -122,7 +122,16 @@ $(document).ready(function(){
             var price = $('#'+part+power+' #price').text();
 
             openPartModal({id:id,part:part,power:power,price:price});
-                    
+
+        });
+
+        $('.upgrade-nettype').on('click', function(){
+
+            var typeId = $(this).attr('id');
+            var price = $(this).closest('tr').find('#price').text();
+
+            openPartModal({id:typeId,part:'nettype',power:typeId,price:price});
+
         });
 
         function openPartModal(opts){

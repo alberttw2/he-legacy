@@ -22,26 +22,55 @@ $ranking = '';
 $adminClan = '';
 $settingsClan = '';
 $warClan = '';
+$researchClan = '';
 $span = 'span8';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['clan_action'])) {
+    require_once BASE_PATH . 'classes/ClanResearch.class.php';
+    $clanResearch = new ClanResearch();
+    $playerClanID = $clan->getPlayerClan();
+
+    switch ($_POST['clan_action']) {
+        case 'start_research':
+            $clanResearch->start($playerClanID, (int)$_POST['soft_type'], (int)$_POST['target_version'], $_SESSION['id']);
+            $session->addMsg('Clan research started!', 'success');
+            break;
+        case 'contribute_research':
+            $clanResearch->contribute((int)$_POST['research_id'], $_SESSION['id']);
+            $session->addMsg('You are now contributing to clan research!', 'success');
+            break;
+        case 'stop_contributing':
+            $clanResearch->stopContributing((int)$_POST['research_id'], $_SESSION['id']);
+            unset($_SESSION['hw_cache']); // Reset CPU cache
+            $session->addMsg('You stopped contributing. Your CPU is back to full speed.', 'notice');
+            break;
+        case 'cancel_research':
+            $clanResearch->cancel((int)$_POST['research_id'], $_SESSION['id']);
+            $session->addMsg('Research cancelled.', 'notice');
+            break;
+    }
+    header("Location:clan?action=research");
+    exit();
+}
 
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST)){
 
     $clan->handlePost();
-    
+
 
 }    
 
 if($system->issetGet('action')){
     
-    $actionInfo = $system->switchGet('action', 'join', 'search', 'ranking', 'create', 'settings', 'admin', 'list', 'leave', 'war');
-    
+    $actionInfo = $system->switchGet('action', 'join', 'search', 'ranking', 'create', 'settings', 'admin', 'list', 'leave', 'war', 'research');
+
     if($actionInfo['ISSET_GET'] == 1){
-        
+
         $myClan = '';
-        
+
         switch($actionInfo['GET_VALUE']){
-            
-            case 'search':             
+
+            case 'search':
                 $searchClan = 'active';
                 break;
             case 'create':
@@ -51,7 +80,7 @@ if($system->issetGet('action')){
                 $ranking = 'active';
                 break;
             case 'admin':
-            case 'leave':    
+            case 'leave':
                 $adminClan = 'active';
                 $settingsClan = 'active';
                 if(!isset($_GET['id'])){
@@ -59,7 +88,7 @@ if($system->issetGet('action')){
                 }
                 break;
             case 'settings':
-            case 'leave':    
+            case 'leave':
                 $settingsClan = 'active';
                 break;
             case 'list':
@@ -68,6 +97,9 @@ if($system->issetGet('action')){
                 break;
             case 'war':
                 $warClan = 'active';
+                break;
+            case 'research':
+                $researchClan = 'active';
                 break;
             
             
@@ -112,6 +144,7 @@ if($clan->playerHaveClan()){
                                     <li class="link <?php echo $createClan; ?>"><a href="?action=create"><span class="icon-tab he16-clan_add"></span><span class="hide-phone"><?php echo _('Create clan'); ?></span></a></li>
                                     <?php } else { ?>
                                     <li class="link <?php echo $warClan; ?>"><a href="?action=war"><span class="icon-tab he16-war_info"></span><span class="hide-phone"><?php echo _('Clan war'); ?></span></a></li>
+                                    <li class="link <?php echo $researchClan; ?>"><a href="?action=research"><span class="icon-tab fa fa-flask"></span><span class="hide-phone">Research Lab</span></a></li>
                                         <?php if($auth == 1){ ?>
                                             <li class="link <?php echo $settingsClan; ?>"><a href="?action=settings"><span class="icon-tab he16-clan_set"></span><span class="hide-phone"><?php echo _('Clan settings'); ?></span></a></li>
                                         <?php } else { ?>
@@ -132,14 +165,31 @@ if($clan->playerHaveClan()){
 
 if($system->issetGet('action')){
     
-    $actionInfo = $system->switchGet('action', 'join', 'search', 'ranking', 'create', 'settings', 'admin', 'list', 'leave', 'war');
-    
+    $actionInfo = $system->switchGet('action', 'join', 'search', 'ranking', 'create', 'settings', 'admin', 'list', 'leave', 'war', 'research');
+
     if($actionInfo['ISSET_GET'] == 1){
-        
+
         switch($actionInfo['GET_VALUE']){
-            
+
+            case 'research':
+
+                if($clanMember == 1){
+                    require_once BASE_PATH . 'classes/ClanResearch.class.php';
+                    $clanResearch = new ClanResearch();
+                    $playerClanID = $clan->getPlayerClan();
+                    $stmtLeader = PDO_DB::factory()->prepare("SELECT createdBy FROM clan WHERE clanID = ? LIMIT 1");
+                    $stmtLeader->execute([$playerClanID]);
+                    $isLeader = ((int)$stmtLeader->fetchColumn() === (int)$_SESSION['id']);
+                    $clanResearch->renderLab($playerClanID, $isLeader);
+                } else {
+                    $session->addMsg('You must be in a clan to access the Research Lab.', 'error');
+                    $session->returnMsg();
+                }
+
+                break;
+
             case 'war':
-                
+
                 if($clanMember == 1){
 
                     if($system->issetGet('clan') && !$system->issetGet('show')){

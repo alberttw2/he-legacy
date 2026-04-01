@@ -35,6 +35,7 @@ $jobs = [
     'war'           => 'cron/endWar2.php',
     'safenet'       => 'cron/safenetUpdate.php',
     'serverstats'   => 'cron/updateServerStats.php',
+    'clan-income'   => 'cron/clanIncome.php',
 ];
 
 $filter = $argv[1] ?? null;

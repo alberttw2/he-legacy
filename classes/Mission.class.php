@@ -484,7 +484,50 @@ class Mission {
                 }
                 
                 $textArray['VICTIM_CALL'] = $t;
-                
+
+                break;
+            case 6: //spy - collect intel
+
+                $seed = $seedArr[2];
+
+                if($seed == 1){
+                    $t = sprintf(_(' We need you to hack into %s and access their server logs to collect intel.'), '<a href="internet?ip='.$victimIP.'">'.$victimName.'</a>');
+                    $t .= _(' Find the specific log entry we are looking for and report back.');
+                } elseif($seed == 2){
+                    $t = sprintf(_(' Your mission is to infiltrate %s\'s servers and read their logs to gather intelligence.'), '<a href="internet?ip='.$victimIP.'">'.$victimName.'</a>');
+                    $t .= _(' We need to know what they have been up to.');
+                }
+
+                $textArray['VICTIM_CALL'] = $t;
+
+                break;
+            case 7: //upload virus
+
+                $seed = $seedArr[2];
+
+                if($seed == 1){
+                    $t = sprintf(_(' We need you to upload any virus software to %s\'s server.'), '<a href="internet?ip='.$victimIP.'">'.$victimName.'</a>');
+                    $t .= _(' Make sure you have a virus ready before hacking in.');
+                } elseif($seed == 2){
+                    $t = sprintf(_(' Your mission is to infect %s\'s servers with a virus.'), '<a href="internet?ip='.$victimIP.'">'.$victimName.'</a>');
+                    $t .= _(' Upload any virus you have to their system.');
+                }
+
+                $textArray['VICTIM_CALL'] = $t;
+
+                break;
+            case 8: //research race
+
+                $this->software = new SoftwareVPC();
+                $softNames = array(1 => 'Cracker', 2 => 'Firewall', 3 => 'Spammer', 4 => 'Hider', 5 => 'Seeker', 6 => 'Exploit');
+                $targetSoftName = isset($softNames[$mission->info]) ? $softNames[$mission->info] : 'Software';
+                $targetVersion = $this->software->dotVersion($mission->newinfo);
+
+                $staticText = $textArray['GREETING'].' '.$textArray['INTRO'];
+                $staticText .= sprintf(_(' We are running a research program and need you to research %s to version %s.'), '<span class="red">'.$targetSoftName.'</span>', '<span class="red">'.$targetVersion.'</span>');
+                $staticText .= ' '.$textArray['PAYMENT'];
+                $staticText .= _(' Complete the research before anyone else and the reward is yours.');
+
                 break;
             case 50: //researched crc x
                 $staticText =  $pname.', I\'ve been checking your performance on the last weeks and you seems to be a very experienced hacker. I would love to work with you.';
@@ -623,20 +666,29 @@ class Mission {
             case 5:
                 $limitArr[2] = 2;
                 break;
-            
+            case 6:
+                $limitArr[2] = 2;
+                break;
+            case 7:
+                $limitArr[2] = 2;
+                break;
+            case 8:
+                $limitArr[2] = 2;
+                break;
+
         }
-        
-        
-        
+
+
+
         for($i = 0; $i < sizeof($limitArr); $i++){
             $seedArr[$i] = rand(1, $limitArr[$i]);
         }
-        
+
         $this->session->newQuery();
-        $sql = "INSERT INTO missions_seed (missionID, greeting, intro, victim_call, payment, victim_location, warning, action) 
+        $sql = "INSERT INTO missions_seed (missionID, greeting, intro, victim_call, payment, victim_location, warning, action)
                 VALUES ('".$missionID."', '".$seedArr[0]."', '".$seedArr[1]."', '".$seedArr[2]."', '".$seedArr[3]."', '".$seedArr[4]."', '".$seedArr[5]."', '".$seedArr[6]."')";
         $this->pdo->query($sql);
-        
+
     }
     
     public function seed_get($missionID){
@@ -992,6 +1044,27 @@ class Mission {
                     $class .= 'red bold';
                 }
                 return '<span class="'.$class.'">'._('Very hard').'</span>';
+            case 6:
+                if($label){
+                    $class .= 'label-success';
+                } else {
+                    $class .= 'green';
+                }
+                return '<span class="'.$class.'">'._('Easy').'</span>';
+            case 7:
+                if($label){
+                    $class .= 'label-warning';
+                } else {
+                    $class .= 'orange';
+                }
+                return '<span class="'.$class.'">'._('Medium').'</span>';
+            case 8:
+                if($label){
+                    $class .= 'label-important';
+                } else {
+                    $class .= 'red';
+                }
+                return '<span class="'.$class.'">'._('Hard').'</span>';
             default:
                 return 'Unknown';
                 
@@ -1160,6 +1233,15 @@ class Mission {
                 break;
             case 5:
                 $text = 'Destroy server';
+                break;
+            case 6:
+                $text = 'Collect intel';
+                break;
+            case 7:
+                $text = 'Upload virus';
+                break;
+            case 8:
+                $text = 'Research race';
                 break;
             case 50:
             case 51:    
@@ -1445,10 +1527,14 @@ class Mission {
         $this->level = self::getPlayerMissionLevel();
         
         if($this->level == 3){
-            // 2019: The IP below (from sexsi) is hardcoded and must be manually updated after every round reset.
+            $sexsiIP = '167.140.97.118';
+            // Dynamic lookup for Sexsi IP
+            $stmtSexsi = $this->pdo->query("SELECT INET_NTOA(n.npcIP) as ip FROM npc n INNER JOIN npc_info_en ni ON ni.npcID = n.id WHERE ni.name = 'Sexsi' LIMIT 1");
+            $rowSexsi = $stmtSexsi->fetch(PDO::FETCH_ASSOC);
+            if ($rowSexsi) $sexsiIP = $rowSexsi['ip'];
             ?>
                 <div class="alert center">
-                    <?php echo _('<strong>Hey! I love <a href="internet.php?ip=105.10.220.227">sexsi</a>. Especially when it *works*.</strong>'); ?>
+                    <?php echo sprintf(_('<strong>Hey! I love <a href="internet?ip=%s">sexsi</a>. Especially when it *works*.</strong>'), $sexsiIP); ?>
                 </div>
             <?php
         }

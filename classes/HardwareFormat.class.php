@@ -53,11 +53,13 @@ class HardwareFormat {
         return $mb . ' MB' . $suffix;
     }
 
-    public static function net($mbit) {
+    public static function net($mbit, $netType = 0) {
+        $types = ['', ' (Sym)', ' (Fiber)'];
+        $suffix = $types[$netType] ?? '';
         if ($mbit >= 1000) {
-            return round($mbit / 1000, 1) . ' Gbps';
+            return round($mbit / 1000, 1) . ' Gbps' . $suffix;
         }
-        return $mbit . ' Mbps';
+        return $mbit . ' Mbps' . $suffix;
     }
 
     public static function xhd($mb) {

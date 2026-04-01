@@ -4129,19 +4129,31 @@ die("Deprecated"); //But I'm going to use it in the future, so do not delete it
     public function war_update($vicClan, $ddosPower){
 
         $myClan = self::getPlayerClan();
-        
+
+        // Clan Firewall: reduce DDoS damage based on victim clan's server CPU
+        $this->session->newQuery();
+        $fwSql = "SELECT SUM(h.cpu) as totalCpu FROM hardware h
+                  INNER JOIN npc n ON h.userID = n.id AND h.isNPC = 1
+                  INNER JOIN clan c ON n.npcIP = c.clanIP
+                  WHERE c.clanID = :vicClan";
+        $fwStmt = $this->pdo->prepare($fwSql);
+        $fwStmt->execute(array(':vicClan' => $vicClan));
+        $vicClanCpu = (int)$fwStmt->fetchColumn();
+        $defense = $vicClanCpu / 1000;
+        $ddosPower = $ddosPower * (1 - $defense / ($defense + $ddosPower));
+
         $this->session->newQuery();
         $sql = "SELECT clanID1 FROM clan_war WHERE (clanID1 = :vicClan AND clanID2 = :myClan) OR (clanID2 = :vicClan2 AND clanID1 = :myClan2) LIMIT 1";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(array(':vicClan' => $vicClan, ':myClan' => $myClan, ':vicClan2' => $vicClan, ':myClan2' => $myClan));
         $data = $stmt->fetchAll();
-        
+
         if($data['0']['clanid1'] == $myClan){
             $field = 'score1';
         } else {
             $field = 'score2';
         }
-        
+
         //, endDate = DATE_ADD(endDate, INTERVAL 1 HOUR)
         $this->session->newQuery();
         // $field is whitelisted (score1 or score2) by internal logic

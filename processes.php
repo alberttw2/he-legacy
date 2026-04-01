@@ -49,11 +49,103 @@ if($system->issetGet('del')){
 
 }
 
+if (isset($_GET['action']) && $_GET['action'] == 'completeAll') {
+
+    // Find ALL completed processes for this user
+    $pdo = PDO_DB::factory();
+    $stmt = $pdo->prepare(
+        "SELECT pid FROM processes
+         WHERE pcreatorid = :uid
+         AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) <= 0
+         AND isPaused = 0
+         ORDER BY pTimeEnd ASC"
+    );
+    $stmt->execute([':uid' => $_SESSION['id']]);
+    $allProcs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $count = 0;
+
+    foreach ($allProcs as $proc) {
+        if ($process->issetPID($proc['pid'])) {
+            $process->completeProcess($proc['pid']);
+            $count++;
+        }
+    }
+
+    if ($count > 0) {
+        $session->addMsg(sprintf(_('%d process(es) completed.'), $count), 'notice');
+    } else {
+        $session->addMsg(_('No completable processes found.'), 'notice');
+    }
+
+    header("Location:processes.php");
+    exit();
+
+}
+
+if (isset($_GET['action']) && $_GET['action'] == 'pauseAll') {
+    $pdo = PDO_DB::factory();
+    $stmt = $pdo->prepare(
+        "SELECT pid FROM processes
+         WHERE pcreatorid = :uid
+         AND TIMESTAMPDIFF(SECOND, NOW(), pTimeEnd) > 0
+         AND isPaused = 0
+         ORDER BY pTimeEnd ASC"
+    );
+    $stmt->execute([':uid' => $_SESSION['id']]);
+    $active = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $count = 0;
+
+    foreach ($active as $proc) {
+        if ($process->issetPID($proc['pid'])) {
+            $process->pauseProcess($proc['pid']);
+            $count++;
+        }
+    }
+
+    if ($count > 0) {
+        $session->addMsg(sprintf(_('%d process(es) paused.'), $count), 'notice');
+    } else {
+        $session->addMsg(_('No pausable processes found.'), 'notice');
+    }
+
+    header("Location:processes.php");
+    exit();
+}
+
+if (isset($_GET['action']) && $_GET['action'] == 'resumeAll') {
+    $pdo = PDO_DB::factory();
+    $stmt = $pdo->prepare(
+        "SELECT pid FROM processes
+         WHERE pcreatorid = :uid
+         AND isPaused = 1
+         ORDER BY pTimeEnd ASC"
+    );
+    $stmt->execute([':uid' => $_SESSION['id']]);
+    $paused = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $count = 0;
+
+    foreach ($paused as $proc) {
+        if ($process->issetPID($proc['pid'])) {
+            $process->resumeProcess($proc['pid']);
+            $count++;
+        }
+    }
+
+    if ($count > 0) {
+        $session->addMsg(sprintf(_('%d process(es) resumed.'), $count), 'notice');
+    } else {
+        $session->addMsg(_('No paused processes found.'), 'notice');
+    }
+
+    header("Location:processes.php");
+    exit();
+}
+
 if($session->issetMsg()){
 
     $session->returnMsg();
 
-}    
+}
 
 if($system->issetGet('page')){
 
@@ -184,7 +276,8 @@ if($gotGet == '1'){
 
                 case 'priority':
 
-                    $process->togglePriority($getInfo['GET_VALUE']);
+                    $dir = $_GET['dir'] ?? 'up';
+                    $process->togglePriority($getInfo['GET_VALUE'], $dir);
 
                     $session->addMsg(_('Process priority updated.'), 'notice');
 
