@@ -68,7 +68,7 @@ foreach ($npcs as $npc) {
                 $virusName .= '.vpsam ';
             }
 
-            $virusName .= $virus['softVersion'];
+            $virusName .= $virus['softversion'];
 
             $stmtInsertNotif->execute([$userID, $npcIP, $virusName]);
         }

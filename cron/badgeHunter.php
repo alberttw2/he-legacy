@@ -96,7 +96,7 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     if ($row['total'] < 1000000) {
         break;
     }
-    BadgeManager::award('user', $row['bankUser'], 55);
+    BadgeManager::award('user', $row['bankuser'], 55);
 }
 
 // Badge 'DDoSer' (100+ DDoS attacks)

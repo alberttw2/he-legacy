@@ -576,6 +576,7 @@ class HardwareVPC extends Player {
 
         $system = new System();
 
+
         if(isset($_POST['act']) && isset($_POST['price'])){
 
             $type = 'buy';
@@ -1597,10 +1598,25 @@ class HardwareVPC extends Player {
 
                     if($typeID <= $currentType) {
                         $typePrice = '';
-                        $typeBuy = ($typeID == $currentType) ? '<span class="label label-success">Current</span>' : '';
+                        $typeBuy = ($typeID == $currentType) ? '<span class="label label-success">Current</span>' : '<span class="label">Owned</span>';
                     } else {
-                        $typePrice = '$<span id="price">'.number_format($typeInfo['price']).'</span>';
-                        $typeBuy = '<span class="he16-buy_hardware icon-tab tip-top upgrade-nettype link" title="Buy" id="'.$typeID.'" value="nettype"></span>';
+                        $typePrice = '$'.number_format($typeInfo['price']);
+                        $typeBuy = '
+                            <form action="hardware.php" method="POST" style="display:inline;" onsubmit="return confirm(\'Buy '.htmlspecialchars($typeInfo['name']).' for $'.number_format($typeInfo['price']).'?\');">
+                                <input type="hidden" name="act" value="nettype">
+                                <input type="hidden" name="part-id" value="'.$typeID.'">
+                                <input type="hidden" name="price" value="'.$typeInfo['price'].'">
+                                <select name="acc" style="width:auto;margin:0;padding:2px;">';
+                        // Get bank accounts
+                        $bankStmt = $this->pdo->prepare("SELECT bankAcc, cash FROM bankAccounts WHERE bankUser = ? ORDER BY cash DESC");
+                        $bankStmt->execute([$_SESSION['id']]);
+                        $bankAccs = $bankStmt->fetchAll(PDO::FETCH_ASSOC);
+                        foreach($bankAccs as $ba) {
+                            $typeBuy .= '<option value="'.$ba['bankacc'].'">#'.$ba['bankacc'].' ($'.number_format($ba['cash']).')</option>';
+                        }
+                        $typeBuy .= '</select>
+                                <button type="submit" class="btn btn-success btn-small">Buy</button>
+                            </form>';
                     }
 
                     ?>

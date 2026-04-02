@@ -373,39 +373,11 @@ class Process {
                     }
                     ?>
 
-                    <?php if ($pInfo->ispaused == 0): ?>
-                        <?php if ($timeLeft > 0): ?>
-                            <div class="process-time-info" style="text-align:center;font-size:11px;color:#999;margin-top:2px;">
-                                <?php
-                                $mins = floor($timeLeft / 60);
-                                $secs = $timeLeft % 60;
-                                echo $mins > 0 ? $mins . 'm ' . $secs . 's' : $secs . 's';
-                                echo ' ' . _('remaining');
-                                ?>
-                            </div>
-                        <?php else: ?>
-                            <div class="process-time-info" style="text-align:center;font-size:11px;color:#259D1C;margin-top:2px;">
-                                <strong>&#10003; <?php echo _('Complete'); ?></strong>
-                            </div>
-                        <?php endif; ?>
+                    <?php if ($pInfo->ispaused == 0 && $timeLeft <= 0): ?>
+                        <div style="text-align:center;font-size:11px;color:#259D1C;margin-top:2px;">
+                            <strong>&#10003; <?php echo _('Ready'); ?></strong>
+                        </div>
                     <?php endif; ?>
-
-                    <?php
-                    // Task 3 & 4: Time estimation and resource stats
-                    if($timeLeft > 0 && $pInfo->ispaused == 0){
-                        $resourceUsage = $isNetProcess ? $pInfo->netusage : $pInfo->cpuusage;
-                        $resourceType = $isNetProcess ? 'NET' : 'CPU';
-                    ?>
-                    <div class="process-stats" style="font-size:10px;color:#888;margin-top:3px;">
-                        <?php echo sprintf(_('Using %s%% %s'), round($resourceUsage), $resourceType); ?>
-                        <?php if($pInfo->ptimeideal > 0 && $activeCountForType > 1): ?>
-                            &middot; <?php echo sprintf(_('Ideal: %ss'), $pInfo->ptimeideal); ?>
-                            &middot; <?php echo sprintf(_('Sharing with %d other %s'), $activeCountForType - 1, $activeCountForType - 1 == 1 ? _('process') : _('processes')); ?>
-                        <?php endif; ?>
-                    </div>
-                    <?php
-                    }
-                    ?>
 
                     </div>
                     <div class="span3 proc-action">
@@ -434,12 +406,15 @@ class Process {
                                     } else {
                                         echo 'N/A';
                                     }
-                                    ?>     
-                                        
+                                    ?>
+
                                     </span>
-                                    
+                                    <?php if(($activeCountForType ?? 1) > 1): ?>
+                                        <br/><span class="small nomargin" style="color:#888;font-size:9px;"><?php echo sprintf(_('Sharing: %d'), $activeCountForType); ?></span>
+                                    <?php endif; ?>
+
                                     <?php
-                                    
+
                                 } else {
                                     if($timeLeft == 0 || $pInfo->ispaused == 1){
                                         $usage = 0;
@@ -450,6 +425,9 @@ class Process {
                                     }        
                                     ?>
                                     <span class="he16-cpu"></span> <span class="small nomargin"><?php echo $usage; ?>%</span><br/>
+                                    <?php if(($activeCountForType ?? 1) > 1): ?>
+                                        <span class="small nomargin" style="color:#888;font-size:9px;"><?php echo sprintf(_('Sharing: %d'), $activeCountForType); ?></span><br/>
+                                    <?php endif; ?>
                                     <?php
                                 }
                                 ?>
